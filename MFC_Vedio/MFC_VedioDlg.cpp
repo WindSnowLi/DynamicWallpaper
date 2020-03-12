@@ -1,0 +1,737 @@
+﻿
+// MFC_VedioDlg.cpp: 实现文件
+//
+
+#include "pch.h"
+#include "framework.h"
+#include "MFC_Vedio.h"
+#include "MFC_VedioDlg.h"
+#include "afxdialogex.h"
+
+using namespace std;
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
+
+#define WM_SHOWTASK (WM_USER +1)
+
+// 用于应用程序“关于”菜单项的 CAboutDlg 对话框
+
+class CAboutDlg : public CDialogEx
+{
+public:
+	CAboutDlg();
+
+// 对话框数据
+#ifdef AFX_DESIGN_TIME
+	enum { IDD = IDD_ABOUTBOX };
+#endif
+
+	protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
+
+// 实现
+protected:
+	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnBnClickedOk();
+};
+
+CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
+{
+}
+
+HWND workerw;
+
+BOOL CALLBACK EnumwindowProcFindDesktopwindow(HWND hwnd, LPARAM lparam) {
+	HWND p = ::FindWindowEx(hwnd, NULL, L"SHELLDLL_DefView", NULL);
+	if (p == NULL)return 1;
+	workerw = ::FindWindowEx(NULL, hwnd, L"Workerw", NULL);
+	return 0;
+}
+
+void CAboutDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+}
+
+BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+	ON_BN_CLICKED(IDOK, &CAboutDlg::OnBnClickedOk)
+END_MESSAGE_MAP()
+
+
+// CMFCVedioDlg 对话框
+
+
+
+CMFCVedioDlg::CMFCVedioDlg(CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_MFC_VEDIO_DIALOG, pParent)
+{
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+}
+
+void CMFCVedioDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_FILEPath, filepath);
+	DDX_Control(pDX, IDC_volume, m_slider);
+	DDX_Control(pDX, IDC_transparent, transparent);
+	DDX_Control(pDX, IDC_autoStartStatus, autoStartStatus);
+}
+
+BEGIN_MESSAGE_MAP(CMFCVedioDlg, CDialogEx)
+	ON_WM_SYSCOMMAND()
+	ON_WM_PAINT()
+	ON_WM_QUERYDRAGICON()
+	ON_BN_CLICKED(IDC_SelectFile, &CMFCVedioDlg::OnBnClickedSelectfile)
+	ON_WM_TIMER()
+	ON_WM_HSCROLL()
+	ON_MESSAGE(WM_SHOWTASK, OnShowTask)
+	ON_COMMAND(ID_EXIT_RMENU, &CMFCVedioDlg::OnExitRmenu)
+	ON_WM_CLOSE()
+	ON_CBN_SELCHANGE(IDC_transparent, &CMFCVedioDlg::OnCbnSelchangetransparent)
+	ON_BN_CLICKED(IDC_autoStartStatus, &CMFCVedioDlg::OnBnClickedautostartstatus)
+	ON_WM_CREATE()
+	ON_BN_CLICKED(IDC_loopPlayer, &CMFCVedioDlg::OnBnClickedloopplayer)
+END_MESSAGE_MAP()
+
+
+// CMFCVedioDlg 消息处理程序
+
+BOOL CMFCVedioDlg::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+	this->SetWindowTextW(_T("动态壁纸"));
+	m_slider.SetRange(0, 100);//设置滑动范围为1到20
+	m_slider.SetTicFreq(1);//每1个单位画一刻度
+	m_slider.SetPos(30);//设置滑块初始位置为1 
+	CString a,b;
+	a.Format(_T("%d"), 30);
+	GetDlgItem(IDC_showVolume)->SetWindowTextW(a);
+	HWND hwnd_progman = ::FindWindow(L"Progman", NULL);
+	if (hwnd_progman == NULL) {
+		MessageBox(_T("初始化错误"));
+	}
+	DWORD_PTR result = 0;
+	SendMessageTimeout(hwnd_progman, 0x052c, NULL, NULL, SMTO_NORMAL, 1000, &result);
+
+	EnumWindows(EnumwindowProcFindDesktopwindow, NULL);
+	vedioPlayer->workerw = workerw;
+
+
+	int index = transparent.FindStringExact(0, _T("0.4"));
+	//0表示从索引为0的选项开始查找.如果找到有叫three的选项就返回它的索引
+	transparent.SetCurSel(index);
+
+	setTransparent(255*0.4);
+
+	if (mOldBackgroud.IsNull()) {
+		HDC hDC = ::GetWindowDC(workerw);
+		int nBitPerPixel = GetDeviceCaps(hDC, BITSPIXEL);
+		int nWidth = GetDeviceCaps(hDC, HORZRES);
+		int nHeight = GetDeviceCaps(hDC, VERTRES);
+
+		mOldBackgroud.Create(nWidth, nHeight, nBitPerPixel);
+		BitBlt(mOldBackgroud.GetDC(), 0, 0, nWidth, nHeight, hDC, 0, 0, SRCCOPY);
+		mOldBackgroud.ReleaseDC();
+	}
+	
+	if (IsAutoBoot()) {
+		((CButton*)GetDlgItem(IDC_autoStartStatus))->SetCheck(1);
+		AutoBootSet();
+	}
+
+	TCHAR szfilePath[MAX_PATH + 1];
+	GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
+
+	CString startingmethod=GetCommandLine();//启动方式
+
+	CString szFilePathTemp = szfilePath;  //文件路径
+	szFilePathTemp = _T("\"")+ szFilePathTemp + _T("\"");   
+
+	startingmethod.Replace(_T(" "), _T(""));
+	szFilePathTemp.Replace(_T(" "), _T(""));
+
+	if (startingmethod.Compare(szFilePathTemp))
+	{
+		PathRemoveFileSpec(szfilePath);//得到应用程序路径
+		PathAppend(szfilePath, _T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
+
+		if (judgeVedioFile(CString_char(szfilePath)))
+		{
+			string fileBuff;
+			fileBuff = judgeFile(CString_char(szfilePath));
+			if (judgeVedioFile((char*)fileBuff.c_str())) {
+				vedioPlayer->loadPlayer(EncodeToUTF8((char*)fileBuff.c_str()));
+				GetDlgItem(IDC_FILEPath)->SetWindowTextW(char_CString((char*)fileBuff.c_str()));
+				SetTimer(2, 10, NULL);
+			}
+			
+		}
+	}
+
+	((CButton*)GetDlgItem(IDC_loopPlayer))->SetCheck(1);
+	setLoop();
+
+	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
+	ASSERT(IDM_ABOUTBOX < 0xF000);
+
+	CMenu* pSysMenu = GetSystemMenu(FALSE);
+	if (pSysMenu != nullptr)
+	{
+		BOOL bNameValid;
+		CString strAboutMenu;
+		bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
+		ASSERT(bNameValid);
+		if (!strAboutMenu.IsEmpty())
+		{
+			pSysMenu->AppendMenu(MF_SEPARATOR);
+			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
+		}
+	}
+
+	// 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动
+	//  执行此操作
+	SetIcon(m_hIcon, TRUE);			// 设置大图标
+	SetIcon(m_hIcon, FALSE);		// 设置小图标
+
+	// TODO: 在此添加额外的初始化代码
+
+	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+}
+
+bool CMFCVedioDlg::judgeVedioFile(char* temp) {
+	ifstream file(temp);
+	if (file)
+	{
+		file.close();
+		return true;
+	}
+	file.close();
+	return false;
+}
+string CMFCVedioDlg::judgeFile(char*temp) {
+	
+	ifstream file(temp);
+	string fileBuff;
+	int i = 0;
+	if (file)
+	{
+		string line;
+		while (getline(file, line)) // line中不包括每行的换行符  
+		{
+			i++;
+			if (i<=lineNumber) {
+				continue;
+			}
+			if (judgeVedioFile((char*)line.c_str())) {
+				lineNumber++;
+				return line;
+				break;
+			}
+		}
+		lineNumber = 0;
+
+	}
+	file.close();
+	return " ";
+}
+
+
+void CMFCVedioDlg::OnSysCommand(UINT nID, LPARAM lParam)
+{
+	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
+	{
+		CAboutDlg dlgAbout;
+		dlgAbout.DoModal();
+	}
+	else
+	{
+		CDialogEx::OnSysCommand(nID, lParam);
+	}
+	if (nID == SC_MINIMIZE)
+		toTray(); //最小化到托盘的函数
+}
+// 如果向对话框添加最小化按钮，则需要下面的代码
+//  来绘制该图标。  对于使用文档/视图模型的 MFC 应用程序，
+//  这将由框架自动完成。
+
+void CMFCVedioDlg::OnPaint()
+{
+	if (IsIconic())
+	{
+		CPaintDC dc(this); // 用于绘制的设备上下文
+		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
+
+		// 使图标在工作区矩形中居中
+		int cxIcon = GetSystemMetrics(SM_CXICON);
+		int cyIcon = GetSystemMetrics(SM_CYICON);
+		CRect rect;
+		GetClientRect(&rect);
+		int x = (rect.Width() - cxIcon + 1) / 2;
+		int y = (rect.Height() - cyIcon + 1) / 2;
+
+		// 绘制图标
+		dc.DrawIcon(x, y, m_hIcon);
+	}
+	else
+	{
+		CDialogEx::OnPaint();
+	}
+}
+
+//当用户拖动最小化窗口时系统调用此函数取得光标
+//显示。
+HCURSOR CMFCVedioDlg::OnQueryDragIcon()
+{
+	return static_cast<HCURSOR>(m_hIcon);
+}
+
+char* CMFCVedioDlg::EncodeToUTF8(const char* mbcsStr)
+{
+	wchar_t* wideStr;
+	char* utf8Str;
+	int charLen;
+
+	charLen = MultiByteToWideChar(936, 0, mbcsStr, -1, NULL, 0);////////936 ----- gb2312
+	wideStr = (wchar_t*)malloc(sizeof(wchar_t) * charLen);
+	MultiByteToWideChar(936, 0, mbcsStr, -1, wideStr, charLen);
+
+	charLen = WideCharToMultiByte(CP_UTF8, 0, wideStr, -1, NULL, 0, NULL, NULL);
+
+	utf8Str = (char*)malloc(charLen);
+
+	WideCharToMultiByte(CP_UTF8, 0, wideStr, -1, utf8Str, charLen, NULL, NULL);
+
+	free(wideStr);
+	return utf8Str;
+
+}
+
+string CMFCVedioDlg::pathConvert(char* ch) {
+
+	string s;
+	string temp = ch;
+	for (int i = 0; i < temp.length(); i++) {
+		if (temp[i] == '\\') {
+			s = s + "\\\\";
+		}
+		else
+		{
+			s = s + temp[i];
+		}
+	}
+	return s;
+}
+
+CString CMFCVedioDlg::char_CString(char* ch)
+{
+	// TODO: 在此处添加实现代码.
+	CString temp;
+
+	int charLen = strlen(ch);
+	//计算多字节字符的大小，按字符计算。
+	int len = MultiByteToWideChar(CP_ACP, 0, ch, charLen, NULL, 0);
+	//为宽字节字符数组申请空间，数组大小为按字节计算的多字节字符大小
+	TCHAR* buf = new TCHAR[(unsigned __int64)len + 1];
+	//多字节编码转换成宽字节编码
+	MultiByteToWideChar(CP_ACP, 0, ch, charLen, buf, len);
+	buf[len] = '\0'; //添加字符串结尾，注意不是len+1
+	//将TCHAR数组转换为CString
+	temp.Append(buf);
+	//删除缓冲区
+	delete[]buf;
+
+	return temp;
+}
+
+
+void CMFCVedioDlg::OnBnClickedSelectfile()
+{
+	char* videopath;
+	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY,
+		_T("视频 (*.asf,*.avi,*.divx,*.dv,*.flv,"
+			"*.gxf,*.m1v,*.m2v,*.m2ts,*.m4v,*.mkv,*.mov,"
+			"*.mp2,*.mp4,*.mpeg,*.mpeg1,*.mpeg2,*.mpeg4,"
+			"*.mpg,*.mts,*.mxf,*.ogg,*.ogm,*.ps,*.ts,*.vob,"
+			"*.wmv,*.a52,*.aac,*.ac3,*.dts,*.flac,*.m4a,"
+			"*.m4p,*.mka,*.mod,*.mp1,*.mp2,*.mp3,*.ogg)|"
+			"(*.asf;*.avi;*.divx;*.dv;*.flv;*.gxf;*.m1v;"
+			"*.m2v;*.m2ts;*.m4v;*.mkv;*.mov;*.mp2;*.mp4;"
+			"*.mpeg;*.mpeg1;*.mpeg2;*.mpeg4;*.mpg;*.mts;"
+			"*.mxf;*.ogg;*.ogm;*.ps;*.ts;*.vob;*.wmv;*.a52;"
+			"*.aac;*.ac3;*.dts;*.flac;*.m4a;*.m4p;*.mka;"
+			"*.mod;*.mp1;*.mp2;*.mp3;*.ogg)|"
+			"所有 (*.*)|*.*||"), this);
+	USES_CONVERSION;
+	if (dlg.DoModal() == IDOK)
+	{
+		filePath = dlg.GetPathName();
+		videopath = T2A(filePath);
+		vedioPlayer->loadPlayer(EncodeToUTF8(pathConvert(videopath).c_str()));
+		GetDlgItem(IDC_FILEPath)->SetWindowTextW(filePath);
+		TCHAR startfilePath[MAX_PATH + 1];
+
+		GetModuleFileName(0, startfilePath, MAX_PATH);
+		PathRemoveFileSpec(startfilePath);//得到应用程序路径
+		PathAppend(startfilePath,_T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
+
+		ofstream outfile;
+		outfile.open(startfilePath, ios::out | ios::app);
+		string write = videopath;
+		write = write+ "\n";;
+		outfile << write;
+		outfile.close();
+	}
+}
+
+
+void CMFCVedioDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	float temp;
+	switch (nIDEvent) {
+	case 1:
+		temp = vedioPlayer->get_position();
+		if (temp >= 0.95) {
+			vedioPlayer->set_position(0.05);
+		}
+		break;
+	case 2:
+		this->ShowWindow(SC_MINIMIZE);
+		toTray();
+		KillTimer(2);
+		break;
+	case 3:
+		if (vedioPlayer->get_position()>=0.9) {
+		//	KillTimer(3);
+			TCHAR szfilePath[MAX_PATH + 1];
+			GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
+			PathRemoveFileSpec(szfilePath);//得到应用程序路径
+			PathAppend(szfilePath, _T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
+			string loopPath = judgeFile(CString_char(szfilePath));
+			ifstream test(loopPath);
+			if (test) {
+				vedioPlayer->loadPlayer((char*)loopPath.c_str());
+				vedioPlayer->set_position(0.05);
+		//		SetTimer(3, 500, NULL);
+				//vedioPlayer->swap();	
+			}
+		}
+		break;
+	}
+	CDialogEx::OnTimer(nIDEvent);
+}
+
+
+void CMFCVedioDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	CSliderCtrl* pSlidCtrl = (CSliderCtrl*)pScrollBar;
+	int volume = pSlidCtrl->GetPos();
+	CString b;
+	b.Format(_T("%d"), volume);
+	switch (pSlidCtrl->GetDlgCtrlID()) {
+	case IDC_volume:
+		vedioPlayer->setVolume(volume);
+		GetDlgItem(IDC_showVolume)->SetWindowTextW(b);
+		break;
+	}
+	CDialogEx::OnHScroll(nSBCode, nPos, pScrollBar);
+}
+
+
+void CMFCVedioDlg::toTray()
+{
+	// TODO: 在此处添加实现代码.
+	NOTIFYICONDATA nid;
+	nid.cbSize = (DWORD)sizeof(NOTIFYICONDATA);
+	nid.hWnd = this->m_hWnd;
+	nid.uID = IDR_MAINFRAME;
+	nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+	nid.uCallbackMessage = WM_SHOWTASK;//自定义的消息名称
+	nid.hIcon = LoadIcon(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
+	
+	wcscpy_s(nid.szTip, L"动态桌面"); //信息提示条
+	
+	nid.cbSize = sizeof(NOTIFYICONDATA);
+	Shell_NotifyIcon(NIM_ADD, &nid); //在托盘区添加图标
+	this->ShowWindow(SW_HIDE); //隐藏主窗口
+}
+LRESULT CMFCVedioDlg::OnShowTask(WPARAM wParam, LPARAM lParam)
+{
+	switch (lParam){
+	case WM_RBUTTONUP:
+	{
+		LPPOINT lpoint = new tagPOINT;
+		::GetCursorPos(lpoint);//得到鼠标位置
+		CMenu menu;
+		menu.LoadMenuW(IDR_MENU1);
+		CMenu* pPopup = menu.GetSubMenu(0);
+		SetForegroundWindow();
+		pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, lpoint->x, lpoint->y, this);
+		delete lpoint;
+	} break;
+	case WM_LBUTTONDOWN: //左键的处理
+	{
+		this->ShowWindow(SW_SHOW);//简单的显示主窗口完事儿
+		DeleteTray();
+	} break;
+	default: break;
+	}
+	return 0;
+}
+
+void CMFCVedioDlg::DeleteTray()
+{
+	NOTIFYICONDATA nid;
+	nid.cbSize = (DWORD)sizeof(NOTIFYICONDATA);
+	nid.hWnd = this->m_hWnd;
+	nid.uID = IDR_MAINFRAME;
+	nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+	nid.uCallbackMessage = WM_SHOWTASK; //自定义的消息名称
+	nid.hIcon = LoadIcon(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
+	wcscpy_s(nid.szTip, L"动态桌面"); //信息提示条为“计划任务提醒”
+	nid.cbSize = sizeof(NOTIFYICONDATA);
+	Shell_NotifyIcon(NIM_DELETE, &nid); //在托盘区删除图标
+}
+
+
+void CMFCVedioDlg::OnExitRmenu()
+{
+	// TODO: 在此添加命令处理程序代码
+	DeleteTray();
+	::SendMessage(AfxGetMainWnd()->m_hWnd, WM_CLOSE, 0, NULL);
+}
+
+
+void CMFCVedioDlg::OnClose()
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	if (!mOldBackgroud.IsNull()) {
+		HDC hDC = ::GetWindowDC(workerw);
+		::SetStretchBltMode(hDC, COLORONCOLOR);
+
+		CRect rect;
+		::GetWindowRect(workerw, &rect);
+		mOldBackgroud.Draw(hDC, rect);
+	}
+	CDialogEx::OnClose();
+}
+
+
+void CMFCVedioDlg::OnCbnSelchangetransparent()
+{
+	CString csValue;
+	int in = transparent.GetCurSel();
+	transparent.GetLBText(in, csValue);
+	float n = _ttof(csValue);
+	setTransparent(n);
+	setTransparent(n);
+}
+
+void CMFCVedioDlg::setTransparent(float transparent) {
+
+	SetWindowLong(this->GetSafeHwnd(), GWL_EXSTYLE, GetWindowLong(this->GetSafeHwnd(), GWL_EXSTYLE) ^ 0x80000); HINSTANCE hInst = LoadLibrary(L"User32.DLL");
+	if (hInst)
+	{
+		typedef BOOL(WINAPI* MYFUNC)(HWND, COLORREF, BYTE, DWORD);
+		MYFUNC fun = NULL;
+		//取得SetLayeredWindowAttributes函数指针 
+		fun = (MYFUNC)GetProcAddress(hInst, "SetLayeredWindowAttributes");
+		if (fun)fun(this->GetSafeHwnd(), 0, (1-transparent+0.05)*255, 2);
+		FreeLibrary(hInst);
+	}
+
+}
+
+//判断程序是否开机自动启动
+BOOL CMFCVedioDlg::IsAutoBoot()
+{
+	HKEY key;
+	LPBYTE path_Get = new BYTE[254];
+	DWORD type = REG_SZ;
+	DWORD dwBytes = 254;
+	bool temp = false;
+	if (RegOpenKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"), 0, KEY_READ, &key) == ERROR_SUCCESS)
+	{
+		// 查询注册表 值
+		if (RegQueryValueEx(key, _T("MFCVedio"), 0, &type, path_Get, &dwBytes) == ERROR_SUCCESS){
+			temp = true;
+		}
+		else{
+			temp = false;
+		}
+	}
+	RegCloseKey(key);
+	return temp;
+}
+
+
+
+char* CMFCVedioDlg::CString_char(CString str)
+{
+
+	//注意：以下n和len的值大小不同，n是按字符计算的，len是按字节计算的
+	int n = str.GetLength();
+
+	//获取宽字节字符的大小，大小是按字节计算的
+	int len = WideCharToMultiByte(CP_ACP, 0, str, str.GetLength(), NULL, 0, NULL, NULL);
+
+	//为多字节字符数组申请空间，数组大小为按字节计算的宽字节字节大小
+	char* pFileName = new char[(unsigned __int64)len + 1];   //以字节为单位
+
+	//宽字节编码转换成多字节编码          
+	WideCharToMultiByte(CP_ACP, 0, str, str.GetLength(), pFileName, len, NULL, NULL);
+	pFileName[len] = '\0';   //多字节字符以'/0'结束
+
+	return pFileName;
+}
+
+TCHAR* CMFCVedioDlg::char2TCAHR(char* str)
+{
+	int size = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+	TCHAR* retStr = new TCHAR[size * sizeof(TCHAR)];
+	MultiByteToWideChar(CP_ACP, 0, str, -1, retStr, size);
+	return retStr;
+}
+
+BOOL CMFCVedioDlg::AutoBootSet()
+{
+	HKEY hKey;
+
+	//找到系统的启动项   
+	CString lpRun = _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+	
+	//打开启动项Key   
+	long lRet = RegOpenKeyEx(HKEY_CURRENT_USER, lpRun, 0, KEY_ALL_ACCESS, &hKey);
+	if (lRet == ERROR_SUCCESS)
+	{
+		TCHAR pFileName[MAX_PATH] = { 0 };
+
+		//得到程序自身的全路径   
+		DWORD dwRet = GetModuleFileName(NULL, pFileName, MAX_PATH);
+		TRACE(pFileName);
+		CString te = pFileName;
+		char* temp1 = CString_char(te);
+		string temp = temp1;
+		string temp2 = "\"" + temp + "\"   /auto";
+		char* temp3 = (char*)temp2.c_str();
+
+		CString ss = char_CString((char*)temp2.c_str());
+
+		CString ssTag = _T("标记自启动");
+		BYTE* bp = (BYTE*)ssTag.GetBuffer(ssTag.GetLength());
+		BYTE expected[16];
+		CopyMemory(expected, bp, sizeof(expected));
+
+	
+		lRet = RegSetValueEx(hKey, _T("MFCVedio"), 0, REG_SZ, bp, (lstrlen(ss) + 1) * sizeof(TCHAR)); 
+		RegCloseKey(hKey);
+		/*
+		
+		因为本人电脑注册表Run路径有时无法写入标准的路径，所以在这用的在Run“标记”的方式，实际自启信息在RunOnce，
+		每次启动检查“标记”，如果存在，再次写入RunOnce
+		
+		*/
+
+		CRegKey key1;
+		key1.Open(HKEY_CURRENT_USER, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce"));
+		key1.SetStringValue(_T("MFCVedio"), ss);
+		key1.Close();
+		if (lRet != ERROR_SUCCESS)
+		{
+			return false;
+		}
+		return true;
+	}
+	return false;
+}
+
+
+//取消程序开机启动
+BOOL CMFCVedioDlg::AutoBootCancel()
+{
+	HKEY hKey;
+	CString lpRun = _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+	long lRet = RegOpenKeyEx(HKEY_CURRENT_USER, lpRun, 0, KEY_ALL_ACCESS, &hKey);
+	RegDeleteValue(hKey, _T("MFCVedio"));
+	RegCloseKey(hKey);
+	CRegKey key1;
+	key1.Open(HKEY_CURRENT_USER, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce"));
+	key1.SetStringValue(_T("MFCVedio"), L" ");
+	key1.Close();
+	return true;
+}
+
+
+void CMFCVedioDlg::OnBnClickedautostartstatus()
+{
+	switch (this->IsDlgButtonChecked(IDC_autoStartStatus))
+	{
+	case BST_CHECKED:
+			AutoBootSet();
+			
+		break;
+	case BST_UNCHECKED:
+			AutoBootCancel();
+		
+		break;
+	}
+}
+
+void CAboutDlg::OnBnClickedOk()
+{
+	CDialogEx::OnOK();
+}
+
+
+void CMFCVedioDlg::PostNcDestroy()
+{
+	if (!mOldBackgroud.IsNull()) {
+		HDC hDC = ::GetWindowDC(workerw);
+		::SetStretchBltMode(hDC, COLORONCOLOR);
+		CRect rect;
+		::GetWindowRect(workerw, &rect);
+		mOldBackgroud.Draw(hDC, rect);
+	}
+	CDialogEx::PostNcDestroy();
+}
+
+
+int CMFCVedioDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+	if (CDialogEx::OnCreate(lpCreateStruct) == -1)
+		return -1;
+	HANDLE   hMutex = ::CreateMutex(NULL, TRUE, L"MFCVedio");
+	if (hMutex != NULL)
+	{
+		if (GetLastError() == ERROR_ALREADY_EXISTS)
+		{
+			MessageBox(L"已经有一个程序运行.",L"提示");
+			PostMessage(WM_QUIT, 0, 0);
+			return   FALSE;
+		}
+	}
+	return 0;
+}
+
+void CMFCVedioDlg::setLoop() {
+	SetTimer(1,100 , NULL);
+}
+
+void CMFCVedioDlg::OnBnClickedloopplayer()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	switch (this->IsDlgButtonChecked(IDC_loopPlayer))
+	{
+	case BST_CHECKED:
+		KillTimer(3);
+		setLoop();
+		break;
+	case BST_UNCHECKED:
+		KillTimer(1);
+		SetTimer(3, 100, NULL);
+		break;
+	}
+}

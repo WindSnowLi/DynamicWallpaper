@@ -47,8 +47,9 @@ float VedioPlayer::get_position()
 {
 	float temp = 0;
 	if (mp != NULL) {
-	temp = libvlc_media_player_get_position(mp);
+		temp = libvlc_media_player_get_position(mp);
 	}
+	
 	return temp;
 }
 
@@ -69,3 +70,16 @@ bool VedioPlayer::set_position(float position)
 	return true;
 }
 
+bool VedioPlayer::set_stop() {
+	if (mp != NULL) {
+		libvlc_media_player_pause(mp);
+	}
+	return true;
+}
+
+bool VedioPlayer::set_play() {
+	if (mp != NULL) {
+		libvlc_media_player_play(mp);
+	}
+	return true;
+}

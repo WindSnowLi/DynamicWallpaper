@@ -8,8 +8,6 @@
 #include "MFC_VedioDlg.h"
 #include "afxdialogex.h"
 
-using namespace std;
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -44,6 +42,25 @@ CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
 }
 
 HWND workerw;
+int overallClickStrength = 800;				//水波点击力度
+int overallSlidingStrength = 240;				//水波滑动力度	
+bool putStonesStatus = false;            //水波线程状态		false为不执行
+bool cycleStatus = false;				//循环播放线程状态
+bool autoNextPlaystatus = false;		//自动播放下一个句柄
+static int lineNumber;					//当前播放的行数
+long wallpaperSize;						//壁纸大小
+bool cursorThreadStatus = false;		//鼠标信息线程状态
+	//子线程需要的所有数据源
+struct Date {
+	VedioPlayer* vp;
+	CRipple* cr;
+	CImage* ci;
+};
+Date* date = new Date();
+
+
+//不同层深部分注解
+//https://blog.csdn.net/mkdym/article/details/7018318
 
 BOOL CALLBACK EnumwindowProcFindDesktopwindow(HWND hwnd, LPARAM lparam) {
 	HWND p = ::FindWindowEx(hwnd, NULL, L"SHELLDLL_DefView", NULL);
@@ -79,6 +96,10 @@ void CMFCVedioDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_volume, m_slider);
 	DDX_Control(pDX, IDC_transparent, transparent);
 	DDX_Control(pDX, IDC_autoStartStatus, autoStartStatus);
+	//  DDX_Slider(pDX, IDC_SlidingStrength, slidingStrength);
+	//  DDX_Slider(pDX, IDC_ClickStrength, clickStrength);
+	DDX_Control(pDX, IDC_SlidingStrength, SlidingStrength);
+	DDX_Control(pDX, IDC_ClickStrength, ClickStrength);
 }
 
 BEGIN_MESSAGE_MAP(CMFCVedioDlg, CDialogEx)
@@ -95,6 +116,8 @@ BEGIN_MESSAGE_MAP(CMFCVedioDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_autoStartStatus, &CMFCVedioDlg::OnBnClickedautostartstatus)
 	ON_WM_CREATE()
 	ON_BN_CLICKED(IDC_loopPlayer, &CMFCVedioDlg::OnBnClickedloopplayer)
+	ON_BN_CLICKED(IDC_Waves, &CMFCVedioDlg::OnBnClickedWaves)
+	ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
 
@@ -107,9 +130,27 @@ BOOL CMFCVedioDlg::OnInitDialog()
 	m_slider.SetRange(0, 100);//设置滑动范围为1到20
 	m_slider.SetTicFreq(1);//每1个单位画一刻度
 	m_slider.SetPos(30);//设置滑块初始位置为1 
-	CString a,b;
+
+
+	//2000/100=20       800/20=40
+	ClickStrength.SetRange(0, 100);//设置滑动范围为1到20
+	ClickStrength.SetTicFreq(1);//每1个单位画一刻度
+	ClickStrength.SetPos(50);//设置滑块初始位置为1 
+	
+	//2000/100=20		240/20=12
+	SlidingStrength.SetRange(0, 100);//设置滑动范围为1到20
+	SlidingStrength.SetTicFreq(1);//每1个单位画一刻度
+	SlidingStrength.SetPos(12);//设置滑块初始位置为1 
+
+	CString a;
 	a.Format(_T("%d"), 30);
 	GetDlgItem(IDC_showVolume)->SetWindowTextW(a);
+	a.Format(_T("%d"), 12);
+	GetDlgItem(IDC_showSliding)->SetWindowTextW(a);
+	a.Format(_T("%d"), 40);
+	GetDlgItem(IDC_showClick)->SetWindowTextW(a);
+
+
 	HWND hwnd_progman = ::FindWindow(L"Progman", NULL);
 	if (hwnd_progman == NULL) {
 		MessageBox(_T("初始化错误"));
@@ -119,7 +160,7 @@ BOOL CMFCVedioDlg::OnInitDialog()
 
 	EnumWindows(EnumwindowProcFindDesktopwindow, NULL);
 	vedioPlayer->workerw = workerw;
-
+	g_Ripple->workerw = workerw;
 
 	int index = transparent.FindStringExact(0, _T("0.4"));
 	//0表示从索引为0的选项开始查找.如果找到有叫three的选项就返回它的索引
@@ -127,6 +168,12 @@ BOOL CMFCVedioDlg::OnInitDialog()
 
 	setTransparent(255*0.4);
 
+
+	//初始化子线程需要的数据
+	date->vp = vedioPlayer;
+	date->cr = g_Ripple;
+	date->ci = &DynamicBackground;
+	/*
 	if (mOldBackgroud.IsNull()) {
 		HDC hDC = ::GetWindowDC(workerw);
 		int nBitPerPixel = GetDeviceCaps(hDC, BITSPIXEL);
@@ -137,13 +184,30 @@ BOOL CMFCVedioDlg::OnInitDialog()
 		BitBlt(mOldBackgroud.GetDC(), 0, 0, nWidth, nHeight, hDC, 0, 0, SRCCOPY);
 		mOldBackgroud.ReleaseDC();
 	}
-	
+	*/
+	/*
+	CImage* img;
+
+	CBitmap* bm;
+
+	img=&mOldBackgroud;
+
+	HBITMAP hbmp = (HBITMAP)img->operator HBITMAP();
+
+
+	//CBitmap   bitmap;                            //定义位图
+	//bitmap.LoadBitmap(IDB_RIPPLE1);           //这个IDB_BITMAP1要自己添加
+	//hBmpRipple = bitmap;
+	hBmpRipple = hbmp;
+	g_Ripple.InitRipple(GetSafeHwnd(), hBmpRipple, 30);
+
+	*/
+
 	if (IsAutoBoot()) {
 		((CButton*)GetDlgItem(IDC_autoStartStatus))->SetCheck(1);
 		AutoBootSet();
 	}
 
-	TCHAR szfilePath[MAX_PATH + 1];
 	GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
 
 	CString startingmethod=GetCommandLine();//启动方式
@@ -167,13 +231,28 @@ BOOL CMFCVedioDlg::OnInitDialog()
 				vedioPlayer->loadPlayer(EncodeToUTF8((char*)fileBuff.c_str()));
 				GetDlgItem(IDC_FILEPath)->SetWindowTextW(char_CString((char*)fileBuff.c_str()));
 				SetTimer(2, 10, NULL);
+				setLoop();
 			}
 			
 		}
 	}
 
 	((CButton*)GetDlgItem(IDC_loopPlayer))->SetCheck(1);
-	setLoop();
+	
+	wallpaperSize = wallpaperFileByte();
+	DynamicBackground.Load(char_CString((char*)pathConvert((char*)buffWallpaperFilePath.c_str()).c_str()));
+	//MessageBox(char_CString((char*)pathConvert((char*)buffWallpaperFilePath.c_str()).c_str()));
+	
+	PathRemoveFileSpec(szfilePath);//得到应用程序路径
+	PathAppend(szfilePath, _T("Spare.jpg"));//添加文件名构造出绝对路径
+	if (DynamicBackground.IsNull()) {
+		DynamicBackground.Load(szfilePath);
+	}
+
+	buffImg = &DynamicBackground;
+
+	HBITMAP hbmp = (HBITMAP)buffImg->operator HBITMAP();
+	g_Ripple->InitRipple(GetSafeHwnd(), hbmp, 30);
 
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
@@ -212,7 +291,7 @@ bool CMFCVedioDlg::judgeVedioFile(char* temp) {
 	file.close();
 	return false;
 }
-string CMFCVedioDlg::judgeFile(char*temp) {
+ string CMFCVedioDlg::judgeFile(char*temp) {
 	
 	ifstream file(temp);
 	string fileBuff;
@@ -368,6 +447,7 @@ void CMFCVedioDlg::OnBnClickedSelectfile()
 	USES_CONVERSION;
 	if (dlg.DoModal() == IDOK)
 	{
+		cycleStatus = false;
 		filePath = dlg.GetPathName();
 		videopath = T2A(filePath);
 		vedioPlayer->loadPlayer(EncodeToUTF8(pathConvert(videopath).c_str()));
@@ -384,8 +464,14 @@ void CMFCVedioDlg::OnBnClickedSelectfile()
 		write = write+ "\n";;
 		outfile << write;
 		outfile.close();
+		if (((CButton*)GetDlgItem(IDC_loopPlayer))->GetCheck() == 1) {
+			cycleStatus = true;
+			setLoop();
+		}
 	}
 }
+
+
 
 
 void CMFCVedioDlg::OnTimer(UINT_PTR nIDEvent)
@@ -393,10 +479,10 @@ void CMFCVedioDlg::OnTimer(UINT_PTR nIDEvent)
 	float temp;
 	switch (nIDEvent) {
 	case 1:
-		temp = vedioPlayer->get_position();
-		if (temp >= 0.95) {
-			vedioPlayer->set_position(0.05);
-		}
+		//temp = vedioPlayer->get_position();
+		//if (temp >= 0.9) {
+		//	vedioPlayer->set_position(0.1);
+		//}
 		break;
 	case 2:
 		this->ShowWindow(SC_MINIMIZE);
@@ -404,20 +490,60 @@ void CMFCVedioDlg::OnTimer(UINT_PTR nIDEvent)
 		KillTimer(2);
 		break;
 	case 3:
-		if (vedioPlayer->get_position()>=0.9) {
-		//	KillTimer(3);
-			TCHAR szfilePath[MAX_PATH + 1];
-			GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
-			PathRemoveFileSpec(szfilePath);//得到应用程序路径
-			PathAppend(szfilePath, _T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
-			string loopPath = judgeFile(CString_char(szfilePath));
-			ifstream test(loopPath);
-			if (test) {
-				vedioPlayer->loadPlayer((char*)loopPath.c_str());
-				vedioPlayer->set_position(0.05);
-		//		SetTimer(3, 500, NULL);
-				//vedioPlayer->swap();	
+		//if (vedioPlayer->get_position()>=0.9) {
+		//	TCHAR szfilePath[MAX_PATH + 1];
+		//	GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
+		//	PathRemoveFileSpec(szfilePath);//得到应用程序路径
+		//	PathAppend(szfilePath, _T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
+		//	string loopPath = judgeFile(CString_char(szfilePath));
+		//	ifstream test(loopPath);
+		//	if (test) {
+		//		vedioPlayer->loadPlayer((char*)loopPath.c_str());
+		//		vedioPlayer->set_position(0.05);
+		//	}
+		//}
+		break;
+	case 4:
+		/*GetCursorPos(&pt);
+		cx = pt.x;
+		cy = pt.y;
+		g_Ripple->DropStone(cx, cy, 2, 256);*/
+		break;
+	case 5:
+		if (wallpaperSize != wallpaperFileByte()) {
+			wallpaperSize = wallpaperFileByte();
+			//KillTimer(4);
+			cancelPutStonesThread();
+			//g_Ripple->cancelTimer();
+
+			//HDC hDC = ::GetWindowDC(workerw);
+			//int nBitPerPixel = GetDeviceCaps(hDC, BITSPIXEL);
+			//int nWidth = GetDeviceCaps(hDC, HORZRES);
+			//int nHeight = GetDeviceCaps(hDC, VERTRES);
+			//DynamicBackground.Destroy();
+			//DynamicBackground.Create(nWidth, nHeight, nBitPerPixel);
+			//BitBlt(DynamicBackground.GetDC(), 0, 0, nWidth, nHeight, hDC, 0, 0, SRCCOPY);
+			//DynamicBackground.ReleaseDC();
+			DynamicBackground.Destroy();
+			DynamicBackground.Load(char_CString((char*)buffWallpaperFilePath.c_str()));
+			if (DynamicBackground.IsNull()) {
+				PathRemoveFileSpec(szfilePath);//得到应用程序路径
+				PathAppend(szfilePath, _T("Spare.jpg"));//添加文件名构造出绝对路径
+				DynamicBackground.Load(szfilePath);
 			}
+			
+			buffImg = &DynamicBackground;
+			hBmpRipple = (HBITMAP)buffImg->operator HBITMAP();
+
+			delete g_Ripple;
+			g_Ripple = NULL;
+			g_Ripple = new CRipple();
+			g_Ripple->workerw = workerw;
+
+			g_Ripple->InitRipple(GetSafeHwnd(), hBmpRipple, 30);
+			g_Ripple->startTimer();
+			//SetTimer(4, 100, NULL);
+			setPutStonesThread();
 		}
 		break;
 	}
@@ -425,16 +551,26 @@ void CMFCVedioDlg::OnTimer(UINT_PTR nIDEvent)
 }
 
 
+
+
 void CMFCVedioDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	CSliderCtrl* pSlidCtrl = (CSliderCtrl*)pScrollBar;
-	int volume = pSlidCtrl->GetPos();
+	int pos = pSlidCtrl->GetPos();
 	CString b;
-	b.Format(_T("%d"), volume);
+	b.Format(_T("%d"), pos);
 	switch (pSlidCtrl->GetDlgCtrlID()) {
 	case IDC_volume:
-		vedioPlayer->setVolume(volume);
+		vedioPlayer->setVolume(pos);
 		GetDlgItem(IDC_showVolume)->SetWindowTextW(b);
+		break;
+	case IDC_SlidingStrength:
+		overallSlidingStrength = pos*20;
+		GetDlgItem(IDC_showSliding)->SetWindowTextW(b);
+		break;
+	case IDC_ClickStrength:
+		overallClickStrength = pos*20;
+		GetDlgItem(IDC_showClick)->SetWindowTextW(b);
 		break;
 	}
 	CDialogEx::OnHScroll(nSBCode, nPos, pScrollBar);
@@ -508,6 +644,7 @@ void CMFCVedioDlg::OnExitRmenu()
 void CMFCVedioDlg::OnClose()
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	/*
 	if (!mOldBackgroud.IsNull()) {
 		HDC hDC = ::GetWindowDC(workerw);
 		::SetStretchBltMode(hDC, COLORONCOLOR);
@@ -516,6 +653,14 @@ void CMFCVedioDlg::OnClose()
 		::GetWindowRect(workerw, &rect);
 		mOldBackgroud.Draw(hDC, rect);
 	}
+	*/
+	HDC hDC = ::GetWindowDC(workerw);
+	::SetStretchBltMode(hDC, COLORONCOLOR);
+
+	CRect rect;
+	::GetWindowRect(workerw, &rect);
+	DynamicBackground.Draw(hDC, rect);
+	restoresWallpaper();
 	CDialogEx::OnClose();
 }
 
@@ -620,7 +765,7 @@ BOOL CMFCVedioDlg::AutoBootSet()
 
 		CString ss = char_CString((char*)temp2.c_str());
 
-		CString ssTag = _T("标记自启动");
+		CString ssTag = _T(" ")+ss;
 		BYTE* bp = (BYTE*)ssTag.GetBuffer(ssTag.GetLength());
 		BYTE expected[16];
 		CopyMemory(expected, bp, sizeof(expected));
@@ -688,16 +833,24 @@ void CAboutDlg::OnBnClickedOk()
 
 void CMFCVedioDlg::PostNcDestroy()
 {
-	if (!mOldBackgroud.IsNull()) {
-		HDC hDC = ::GetWindowDC(workerw);
-		::SetStretchBltMode(hDC, COLORONCOLOR);
-		CRect rect;
-		::GetWindowRect(workerw, &rect);
-		mOldBackgroud.Draw(hDC, rect);
-	}
+	//if (!mOldBackgroud.IsNull()) {
+	//	HDC hDC = ::GetWindowDC(workerw);
+	//	::SetStretchBltMode(hDC, COLORONCOLOR);
+	//	CRect rect;
+	//	::GetWindowRect(workerw, &rect);
+	//	mOldBackgroud.Draw(hDC, rect);
+	//}
+	restoresWallpaper();
 	CDialogEx::PostNcDestroy();
 }
 
+void CMFCVedioDlg::restoresWallpaper() {
+	HDC hDC = ::GetWindowDC(workerw);
+	::SetStretchBltMode(hDC, COLORONCOLOR);
+	CRect rect;
+	::GetWindowRect(workerw, &rect);
+	DynamicBackground.Draw(hDC, rect);
+}
 
 int CMFCVedioDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
@@ -716,22 +869,265 @@ int CMFCVedioDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	return 0;
 }
 
+
 void CMFCVedioDlg::setLoop() {
-	SetTimer(1,100 , NULL);
+	cycleStatus = true;
+	cycleHandle = CreateThread(NULL, 0, loopPlayback, NULL, 0, NULL);
 }
 
+void CMFCVedioDlg::cancelLoop() {
+	cycleStatus = false;
+}
 void CMFCVedioDlg::OnBnClickedloopplayer()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	switch (this->IsDlgButtonChecked(IDC_loopPlayer))
 	{
 	case BST_CHECKED:
-		KillTimer(3);
+		//KillTimer(3);
+		cancelAutoNextPlayThread();
 		setLoop();
 		break;
 	case BST_UNCHECKED:
-		KillTimer(1);
-		SetTimer(3, 100, NULL);
+		//TerminateThread(cycleHandle, 0);
+		cancelLoop();
+		//SetTimer(3, 100, NULL);
+		setAutoNextPlayThread();
 		break;
 	}
 }
+
+void CMFCVedioDlg::setAutoNextPlayThread() {
+	autoNextPlaystatus = true;
+	autoNextPlayHandle = CreateThread(NULL, 0, autoNextPlay, NULL, 0, NULL);
+}
+void CMFCVedioDlg::cancelAutoNextPlayThread() {
+	autoNextPlaystatus = false;
+}
+
+//void CMFCVedioDlg::OnBnClickedButton2()
+//{
+//	vedioPlayer->set_stop();
+//	// TODO: 在此添加控件通知处理程序代码
+//}
+
+
+//void CMFCVedioDlg::OnBnClickedButton1()
+//{
+//	// TODO: 在此添加控件通知处理程序代码
+//}
+
+
+void CMFCVedioDlg::OnBnClickedWaves()
+{
+	switch (this->IsDlgButtonChecked(IDC_Waves))
+	{
+	case BST_CHECKED:
+		SetTimer(5, 3000, NULL);
+		//SetTimer(4, 100, NULL);
+		//putstonesdate->cr = g_Ripple;
+		setPutStonesThread();
+		//g_Ripple->startTimer();
+		break;
+	case BST_UNCHECKED:
+		KillTimer(5);
+		//KillTimer(4);
+		cancelPutStonesThread();
+		//g_Ripple->cancelTimer();
+		restoresWallpaper();
+		break;
+	}
+	
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+void CMFCVedioDlg::setPutStonesThread() {
+	putStonesStatus = true;
+	putStonesHandle = CreateThread(NULL, 0, putStones, date, 0, NULL);
+}
+
+void CMFCVedioDlg::cancelPutStonesThread() {
+	//TerminateThread(putStonesHandle, 0);
+	putStonesStatus = false;
+	g_Ripple->cancelTimer();
+}
+
+//获取所有的文件名
+void CMFCVedioDlg::GetAllFiles(string path, vector<string>& wallpaperFilesName)
+{
+
+	intptr_t   hFile = 0;
+	//文件信息  
+	struct _finddata_t fileinfo;//用来存储文件信息的结构体  
+	string p;
+	if ((hFile = _findfirst(p.assign(path).append("\\*").c_str(), &fileinfo)) != -1)  //第一次查找
+	{
+		do
+		{
+			if (strcmp(fileinfo.name, ".") != 0 && strcmp(fileinfo.name, "..") != 0)  //进入文件夹查找
+			{
+				wallpaperFilesName.push_back(p.assign(path).append("\\").append(fileinfo.name));
+			}
+		} while (_findnext(hFile, &fileinfo) == 0);
+		_findclose(hFile); //结束查找
+	}
+
+}
+
+long CMFCVedioDlg::wallpaperFileByte() {
+	
+	//vector<string> wallpaperFilesName;
+	////读取所有的文件，包括子文件的文件
+	//GetAllFiles(wallpaperFilePath, wallpaperFilesName);
+	TCHAR userName[MAX_PATH + 1];
+	DWORD dwSize = 256;
+	GetUserName(userName, &dwSize);
+	CString buffUserName=userName;
+	buffUserName = _T("C:\\Users\\")+ buffUserName + _T("\\AppData\\Roaming\\Microsoft\\Windows\\Themes\\CachedFiles\\CachedImage_1920_1080_POS4.jpg");
+	buffUserName.Replace(_T(" "), _T(""));
+	char* temp = CString_char(buffUserName);
+	string wallpaperFilePath = temp;
+	delete temp;
+	FILE* pFile;
+	long tempWallpaperSize=0;
+	pFile = fopen(wallpaperFilePath.c_str(), "rb");
+	if (pFile != 0)
+	{
+		fseek(pFile, 0, SEEK_END);   //将文件指针移动文件结尾
+		tempWallpaperSize = ftell(pFile); //求出当前文件指针距离文件开始的字节数
+		fclose(pFile);
+	}
+	buffWallpaperFilePath = wallpaperFilePath;
+	return tempWallpaperSize;
+}
+
+
+
+//void CMFCVedioDlg::OnLButtonDown(UINT nFlags, CPoint point)
+//{
+//	// TODO: 在此添加消息处理程序代码和/或调用默认值
+//	g_Ripple->DropStone(point.x, point.y, 2, 2000);
+//	CDialogEx::OnLButtonDown(nFlags, point);
+//}
+DWORD CMFCVedioDlg::autoNextPlay(LPVOID lpParameter)
+{
+	TCHAR szfilePath[MAX_PATH + 1];
+	GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
+	PathRemoveFileSpec(szfilePath);//得到应用程序路径
+	PathAppend(szfilePath, _T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
+	while (1) {
+		Sleep(100);
+		if (date->vp->get_position() >= 0.9) {
+			string loopPath = judgeFile(CString_char(szfilePath));
+			ifstream test(loopPath);
+			if (test) {
+				date->vp->loadPlayer((char*)loopPath.c_str());
+				date->vp->set_position(0.05);
+			}
+		}
+		if (!autoNextPlaystatus) {
+			break;
+		}
+	}
+	return 0;
+}
+
+DWORD CMFCVedioDlg::putStones(LPVOID lpParameter)
+{
+	CPoint mousePosition;
+	CPoint tempMousePosition;
+
+	date->cr->startTimer();
+
+	CreateThread(NULL, 0, CursorMessage,NULL,0,0);
+	cursorThreadStatus = true;
+
+	while (1) {
+		Sleep(300);
+		GetCursorPos(&tempMousePosition);
+		if (tempMousePosition != mousePosition) {
+			mousePosition = tempMousePosition;
+			date->cr->DropStone(mousePosition.x, mousePosition.y, 2, overallSlidingStrength);
+		}
+		if (!putStonesStatus) {
+			cursorThreadStatus = false;
+			break;
+		}
+	}
+	date->cr->cancelTimer();
+	//delete tempPutstonesdate;
+	return 0;
+}
+
+DWORD CMFCVedioDlg::CursorMessage(LPVOID lpParameter) 
+{
+	CPoint mousePosition;
+	
+	/*
+	//获取不到信息
+	//https://blog.csdn.net/yaotuzhi/article/details/80068556
+	//只限当前线程的窗口
+	*/
+	/*
+	MSG msg;
+	while (GetMessage(&msg, *GetDesktopWindow(), 0, 0))
+	{
+		if (msg.message == VK_LBUTTON) {
+			GetCursorPos(&mousePosition);
+			date->cr->DropStone(mousePosition.x, mousePosition.y, 5, 1000);
+		}
+	}
+	*/
+
+
+	//将GetKeyState函数更改为GetAsyncKeyState，
+	//具体差异见
+	//https://blog.csdn.net/flowshell/article/details/5422395
+	//https://blog.csdn.net/qq_40501731/article/details/86990934
+
+	//不同层深部分注解
+	//https://blog.csdn.net/mkdym/article/details/7018318
+	while (1) {
+		Sleep(200);
+		if (GetAsyncKeyState(1) & 0x8000 || GetAsyncKeyState(2) & 0x8000) {
+			GetCursorPos(&mousePosition);
+			date->cr->DropStone(mousePosition.x, mousePosition.y, 2, overallClickStrength);
+		}
+		if (!cursorThreadStatus) {
+			break;
+		}
+	}
+	
+	return 0;
+}
+
+DWORD CMFCVedioDlg::loopPlayback(LPVOID lpParameter)
+{
+	float temp;
+	Sleep(2700);
+	int vedioLength = date->vp->get_length();
+	int sleeptime = vedioLength / 11;
+	if (sleeptime==0) {
+		sleeptime = 300;
+	}
+	while (1) {
+		Sleep(sleeptime);
+		temp = date->vp->get_position();
+		if (temp >= 0.9) {
+			date->vp->set_position(0.1);
+		}
+		if (!cycleStatus) {
+			break;
+		}
+	}
+	//delete tempdate;
+	return 0;
+}
+
+
+//void CMFCVedioDlg::OnNMCustomdrawvolume(NMHDR* pNMHDR, LRESULT* pResult)
+//{
+//	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
+//	// TODO: 在此添加控件通知处理程序代码
+//	*pResult = 0;
+//}

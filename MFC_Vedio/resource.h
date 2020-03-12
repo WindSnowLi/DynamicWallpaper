@@ -8,14 +8,21 @@
 #define IDD_MFC_VEDIO_DIALOG            102
 #define IDR_MAINFRAME                   128
 #define IDR_MENU1                       133
+#define IDB_RIPPLE1                     134
 #define IDC_FILEPath                    1002
 #define IDC_SelectFile                  1005
 #define IDC_showVolume                  1008
+#define IDC_showVolume2                 1009
+#define IDC_showSliding                 1009
 #define IDC_volume                      1010
+#define IDC_showClick                   1011
 #define IDC_transparent                 1013
 #define IDC_autoStartStatus             1015
 #define IDC_CHECK1                      1017
 #define IDC_loopPlayer                  1017
+#define IDC_Waves                       1020
+#define IDC_SlidingStrength             1022
+#define IDC_ClickStrength               1023
 #define IDR_RBUTTON_EXIT                32773
 #define ID_EXIT_32774                   32774
 #define ID_EXIT_RMENU                   32775
@@ -26,9 +33,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        134
+#define _APS_NEXT_RESOURCE_VALUE        135
 #define _APS_NEXT_COMMAND_VALUE         32778
-#define _APS_NEXT_CONTROL_VALUE         1018
+#define _APS_NEXT_CONTROL_VALUE         1024
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

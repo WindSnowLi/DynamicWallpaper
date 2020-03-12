@@ -11,6 +11,11 @@
 #include <fstream>
 #include <string>
 #include "VedioPlayer.h"
+#include "CRipple.h"
+#include <io.h>
+#include <vector>
+
+
 using namespace std;
 #pragma comment(lib, "libvlc.lib")
 #pragma comment(lib, "libvlccore.lib")
@@ -39,8 +44,8 @@ protected:
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
-	bool judgeVedioFile(char* temp);
-	string judgeFile(char* temp);
+	static bool judgeVedioFile(char* temp);
+	static string judgeFile(char* temp);
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
@@ -49,28 +54,72 @@ protected:
 public:
 	CEdit filepath;
 	CString filePath;
-	string pathConvert(char* ch);
-	CString char_CString(char* ch);
 	CSliderCtrl m_slider;
-	int lineNumber=0;
+	CPoint pt;
+	CComboBox transparent;
+	CButton autoStartStatus;
+
+	/*struct putStonesDate {
+		CRipple* cr;
+	};
+	putStonesDate* putstonesdate = new putStonesDate();*/
 private:
-	CImage mOldBackgroud;
-public:
+	CImage DynamicBackground;
+	CBitmap* buffBitmap;
+	CImage* buffImg;
+	HBITMAP hBmpRipple;				//水波背景图句柄
+	int cx, cy;						//点击x，y坐标
+	string buffWallpaperFilePath;		//系统当前壁纸路径
+	TCHAR szfilePath[MAX_PATH + 1];  //程序所在路径
+	HANDLE cycleHandle;                 //循环播放线程句柄
+	HANDLE putStonesHandle;				//水波线程句柄
+	HANDLE autoNextPlayHandle;			//自动播放下一个句柄
+	CRipple* g_Ripple = new CRipple();
 	VedioPlayer* vedioPlayer = new VedioPlayer();
+
+public:
+	static DWORD WINAPI  loopPlayback(          //循环播放线程
+		LPVOID lpParameter   // thread data
+	);
+
+	static DWORD WINAPI putStones(				//水波纹线程
+		LPVOID lpParameter   // thread data
+	);
+
+	static DWORD WINAPI autoNextPlay(			//自动下一个线程
+		LPVOID lpParameter   // thread data
+	);
+
+	static DWORD WINAPI CursorMessage(			//检测鼠标状态线程
+		LPVOID lpParameter   // thread data
+	);
+	static char* CString_char(CString str);
+	static string pathConvert(char* ch);
+	static CString char_CString(char* ch);
+
+	
+
+	void setPutStonesThread();
+	void cancelPutStonesThread();
+	void GetAllFiles(string path, vector<string>& wallpaperFilesName);
+	long wallpaperFileByte();
 	void toTray();//最小化到托盘
 	void DeleteTray();//删除托盘图标
 	void setTransparent(float transparent);
-	char* CString_char(CString str);
 	TCHAR* char2TCAHR(char* str);
 	BOOL IsAutoBoot();
 	BOOL AutoBootSet();
 	BOOL AutoBootCancel();
-	CComboBox transparent;
-	CButton autoStartStatus;
+
+	void setLoop();
+	void cancelLoop();
+	void restoresWallpaper();
+	void setAutoNextPlayThread();
+	void cancelAutoNextPlayThread();
+
 	virtual void PostNcDestroy();
 	afx_msg void OnBnClickedautostartstatus();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	void setLoop();
 	afx_msg void OnBnClickedloopplayer();
 	afx_msg LRESULT OnShowTask(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnExitRmenu();
@@ -79,4 +128,10 @@ public:
 	afx_msg void OnBnClickedSelectfile();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void OnBnClickedWaves();
+//	int slidingStrength;
+//	int clickStrength;
+//	afx_msg void OnNMCustomdrawvolume(NMHDR* pNMHDR, LRESULT* pResult);
+	CSliderCtrl SlidingStrength;
+	CSliderCtrl ClickStrength;
 };

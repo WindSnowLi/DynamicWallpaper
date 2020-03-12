@@ -21,6 +21,8 @@ public:
 	float get_position();
 	float get_length();
 	bool set_position(float position);
+	bool set_stop();
+	bool set_play();
 	HWND workerw;
 private:
 	int Volume=30;

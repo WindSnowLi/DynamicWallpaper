@@ -36,6 +36,12 @@
     <ClInclude Include="VedioPlayer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CRipple.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CUDA.cuh">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MFC_Vedio.cpp">
@@ -48,6 +54,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="VedioPlayer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CRipple.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -65,5 +74,13 @@
     <Image Include="res\MFC_Vedio.ico">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="C:\Users\70662\Desktop\新建文件夹\图片\P1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="CUDA.cu">
+      <Filter>源文件</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

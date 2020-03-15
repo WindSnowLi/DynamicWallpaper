@@ -22,7 +22,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{5764304B-5A52-40DA-9DC4-DFD2DBD99635}</ProjectGuid>
     <Keyword>MFCProj</Keyword>
-    <RootNamespace>MFCVedio</RootNamespace>
+    <RootNamespace>DynamicWallpaper</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -91,8 +91,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\ProgramData\NVIDIA Corporation\CUDA Samples\v10.2\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\lib\x64;E:\Programming\C++\MFC_Vedio\lib;E:\Programming\C++\MFC_Vedio\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\ProgramData\NVIDIA Corporation\CUDA Samples\v10.2\common\lib\x64;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\lib\x64;E:\Programming\C++\MFC_Vedio\lib;E:\Programming\C++\MFC_Vedio\include;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\LocalGitRepository\DynamicWallpaper\lib;E:\LocalGitRepository\DynamicWallpaper\include;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v10.2\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\lib\x64;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\LocalGitRepository\DynamicWallpaper\lib;E:\LocalGitRepository\DynamicWallpaper\include;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v10.2\common\lib\x64;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -205,8 +205,8 @@
     <ClInclude Include="CRipple.h" />
     <ClInclude Include="CUDA.cuh" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="MFC_Vedio.h" />
-    <ClInclude Include="MFC_VedioDlg.h" />
+    <ClInclude Include="DynamicWallpaper.h" />
+    <ClInclude Include="DynamicWallpaperDlg.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
@@ -214,8 +214,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CRipple.cpp" />
-    <ClCompile Include="MFC_Vedio.cpp" />
-    <ClCompile Include="MFC_VedioDlg.cpp" />
+    <ClCompile Include="DynamicWallpaper.cpp" />
+    <ClCompile Include="DynamicWallpaperDlg.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -225,14 +225,13 @@
     <ClCompile Include="VedioPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="MFCVedio.rc" />
+    <ResourceCompile Include="DynamicWallpaper.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\MFCVedio.rc2" />
+    <None Include="res\DynamicWallpaper.rc2" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="C:\Users\70662\Desktop\新建文件夹\图片\P1.bmp" />
-    <Image Include="res\MFC_Vedio.ico" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="CUDA.cu" />

@@ -1,27 +1,27 @@
 ﻿
-// MFC_Vedio.cpp: 定义应用程序的类行为。
+// DynamicWallpaper.cpp: 定义应用程序的类行为。
 //
 
 #include "pch.h"
 #include "framework.h"
-#include "MFC_Vedio.h"
-#include "MFC_VedioDlg.h"
+#include "DynamicWallpaper.h"
+#include "DynamicWallpaperDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
-// CMFCVedioApp
+// CDynamicWallpaperApp
 
-BEGIN_MESSAGE_MAP(CMFCVedioApp, CWinApp)
+BEGIN_MESSAGE_MAP(CDynamicWallpaperApp, CWinApp)
 	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
 END_MESSAGE_MAP()
 
 
-// CMFCVedioApp 构造
+// CDynamicWallpaperApp 构造
 
-CMFCVedioApp::CMFCVedioApp()
+CDynamicWallpaperApp::CDynamicWallpaperApp()
 {
 	// 支持重新启动管理器
 	m_dwRestartManagerSupportFlags = AFX_RESTART_MANAGER_SUPPORT_RESTART;
@@ -31,14 +31,14 @@ CMFCVedioApp::CMFCVedioApp()
 }
 
 
-// 唯一的 CMFCVedioApp 对象
+// 唯一的 CDynamicWallpaperApp 对象
 
-CMFCVedioApp theApp;
+CDynamicWallpaperApp theApp;
 
 
-// CMFCVedioApp 初始化
+// CDynamicWallpaperApp 初始化
 
-BOOL CMFCVedioApp::InitInstance()
+BOOL CDynamicWallpaperApp::InitInstance()
 {
 	// 如果一个运行在 Windows XP 上的应用程序清单指定要
 	// 使用 ComCtl32.dll 版本 6 或更高版本来启用可视化方式，
@@ -71,7 +71,7 @@ BOOL CMFCVedioApp::InitInstance()
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
 
-	CMFCVedioDlg dlg;
+	CDynamicWallpaperDlg dlg;
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)

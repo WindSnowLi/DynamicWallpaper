@@ -15,12 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MFC_Vedio.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="MFC_VedioDlg.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="framework.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -42,14 +36,14 @@
     <ClInclude Include="CUDA.cuh">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DynamicWallpaper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DynamicWallpaperDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MFC_Vedio.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="MFC_VedioDlg.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -59,21 +53,24 @@
     <ClCompile Include="CRipple.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DynamicWallpaper.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DynamicWallpaperDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="MFCVedio.rc">
+    <ResourceCompile Include="DynamicWallpaper.rc">
       <Filter>资源文件</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\MFCVedio.rc2">
+    <None Include="res\DynamicWallpaper.rc2">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\MFC_Vedio.ico">
-      <Filter>资源文件</Filter>
-    </Image>
     <Image Include="C:\Users\70662\Desktop\新建文件夹\图片\P1.bmp">
       <Filter>资源文件</Filter>
     </Image>

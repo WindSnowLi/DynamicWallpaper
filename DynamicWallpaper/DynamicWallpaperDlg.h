@@ -1,5 +1,5 @@
 ﻿
-// MFC_VedioDlg.h: 头文件
+// DynamicWallpaperDlg.h: 头文件
 //
 
 #include <windows.h>
@@ -22,16 +22,16 @@ using namespace std;
 #pragma once
 
 
-// CMFCVedioDlg 对话框
-class CMFCVedioDlg : public CDialogEx
+// CDynamicWallpaperDlg 对话框
+class CDynamicWallpaperDlg : public CDialogEx
 {
 // 构造
 public:
-	CMFCVedioDlg(CWnd* pParent = nullptr);	// 标准构造函数
+	CDynamicWallpaperDlg(CWnd* pParent = nullptr);	// 标准构造函数
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_MFC_VEDIO_DIALOG };
+	enum { IDD = IDD_DynamicWallpaper_DIALOG };
 #endif
 
 	protected:

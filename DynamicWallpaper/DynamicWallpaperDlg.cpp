@@ -1,11 +1,11 @@
 ﻿
-// MFC_VedioDlg.cpp: 实现文件
+// DynamicWallpaperDlg.cpp: 实现文件
 //
 
 #include "pch.h"
 #include "framework.h"
-#include "MFC_Vedio.h"
-#include "MFC_VedioDlg.h"
+#include "DynamicWallpaper.h"
+#include "DynamicWallpaperDlg.h"
 #include "afxdialogex.h"
 
 #ifdef _DEBUG
@@ -79,17 +79,17 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// CMFCVedioDlg 对话框
+// CDynamicWallpaperDlg 对话框
 
 
 
-CMFCVedioDlg::CMFCVedioDlg(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_MFC_VEDIO_DIALOG, pParent)
+CDynamicWallpaperDlg::CDynamicWallpaperDlg(CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_DynamicWallpaper_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
-void CMFCVedioDlg::DoDataExchange(CDataExchange* pDX)
+void CDynamicWallpaperDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_FILEPath, filepath);
@@ -102,28 +102,28 @@ void CMFCVedioDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_ClickStrength, ClickStrength);
 }
 
-BEGIN_MESSAGE_MAP(CMFCVedioDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CDynamicWallpaperDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDC_SelectFile, &CMFCVedioDlg::OnBnClickedSelectfile)
+	ON_BN_CLICKED(IDC_SelectFile, &CDynamicWallpaperDlg::OnBnClickedSelectfile)
 	ON_WM_TIMER()
 	ON_WM_HSCROLL()
 	ON_MESSAGE(WM_SHOWTASK, OnShowTask)
-	ON_COMMAND(ID_EXIT_RMENU, &CMFCVedioDlg::OnExitRmenu)
+	ON_COMMAND(ID_EXIT_RMENU, &CDynamicWallpaperDlg::OnExitRmenu)
 	ON_WM_CLOSE()
-	ON_CBN_SELCHANGE(IDC_transparent, &CMFCVedioDlg::OnCbnSelchangetransparent)
-	ON_BN_CLICKED(IDC_autoStartStatus, &CMFCVedioDlg::OnBnClickedautostartstatus)
+	ON_CBN_SELCHANGE(IDC_transparent, &CDynamicWallpaperDlg::OnCbnSelchangetransparent)
+	ON_BN_CLICKED(IDC_autoStartStatus, &CDynamicWallpaperDlg::OnBnClickedautostartstatus)
 	ON_WM_CREATE()
-	ON_BN_CLICKED(IDC_loopPlayer, &CMFCVedioDlg::OnBnClickedloopplayer)
-	ON_BN_CLICKED(IDC_Waves, &CMFCVedioDlg::OnBnClickedWaves)
+	ON_BN_CLICKED(IDC_loopPlayer, &CDynamicWallpaperDlg::OnBnClickedloopplayer)
+	ON_BN_CLICKED(IDC_Waves, &CDynamicWallpaperDlg::OnBnClickedWaves)
 	ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
 
-// CMFCVedioDlg 消息处理程序
+// CDynamicWallpaperDlg 消息处理程序
 
-BOOL CMFCVedioDlg::OnInitDialog()
+BOOL CDynamicWallpaperDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 	this->SetWindowTextW(_T("动态壁纸"));
@@ -281,7 +281,7 @@ BOOL CMFCVedioDlg::OnInitDialog()
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
-bool CMFCVedioDlg::judgeVedioFile(char* temp) {
+bool CDynamicWallpaperDlg::judgeVedioFile(char* temp) {
 	ifstream file(temp);
 	if (file)
 	{
@@ -291,7 +291,7 @@ bool CMFCVedioDlg::judgeVedioFile(char* temp) {
 	file.close();
 	return false;
 }
- string CMFCVedioDlg::judgeFile(char*temp) {
+ string CDynamicWallpaperDlg::judgeFile(char*temp) {
 	
 	ifstream file(temp);
 	string fileBuff;
@@ -319,7 +319,7 @@ bool CMFCVedioDlg::judgeVedioFile(char* temp) {
 }
 
 
-void CMFCVedioDlg::OnSysCommand(UINT nID, LPARAM lParam)
+void CDynamicWallpaperDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
 	{
@@ -337,7 +337,7 @@ void CMFCVedioDlg::OnSysCommand(UINT nID, LPARAM lParam)
 //  来绘制该图标。  对于使用文档/视图模型的 MFC 应用程序，
 //  这将由框架自动完成。
 
-void CMFCVedioDlg::OnPaint()
+void CDynamicWallpaperDlg::OnPaint()
 {
 	if (IsIconic())
 	{
@@ -363,12 +363,12 @@ void CMFCVedioDlg::OnPaint()
 
 //当用户拖动最小化窗口时系统调用此函数取得光标
 //显示。
-HCURSOR CMFCVedioDlg::OnQueryDragIcon()
+HCURSOR CDynamicWallpaperDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-char* CMFCVedioDlg::EncodeToUTF8(const char* mbcsStr)
+char* CDynamicWallpaperDlg::EncodeToUTF8(const char* mbcsStr)
 {
 	wchar_t* wideStr;
 	char* utf8Str;
@@ -389,7 +389,7 @@ char* CMFCVedioDlg::EncodeToUTF8(const char* mbcsStr)
 
 }
 
-string CMFCVedioDlg::pathConvert(char* ch) {
+string CDynamicWallpaperDlg::pathConvert(char* ch) {
 
 	string s;
 	string temp = ch;
@@ -405,7 +405,7 @@ string CMFCVedioDlg::pathConvert(char* ch) {
 	return s;
 }
 
-CString CMFCVedioDlg::char_CString(char* ch)
+CString CDynamicWallpaperDlg::char_CString(char* ch)
 {
 	// TODO: 在此处添加实现代码.
 	CString temp;
@@ -427,7 +427,7 @@ CString CMFCVedioDlg::char_CString(char* ch)
 }
 
 
-void CMFCVedioDlg::OnBnClickedSelectfile()
+void CDynamicWallpaperDlg::OnBnClickedSelectfile()
 {
 	char* videopath;
 	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY,
@@ -474,7 +474,7 @@ void CMFCVedioDlg::OnBnClickedSelectfile()
 
 
 
-void CMFCVedioDlg::OnTimer(UINT_PTR nIDEvent)
+void CDynamicWallpaperDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	float temp;
 	switch (nIDEvent) {
@@ -553,7 +553,7 @@ void CMFCVedioDlg::OnTimer(UINT_PTR nIDEvent)
 
 
 
-void CMFCVedioDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+void CDynamicWallpaperDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	CSliderCtrl* pSlidCtrl = (CSliderCtrl*)pScrollBar;
 	int pos = pSlidCtrl->GetPos();
@@ -577,7 +577,7 @@ void CMFCVedioDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 }
 
 
-void CMFCVedioDlg::toTray()
+void CDynamicWallpaperDlg::toTray()
 {
 	// TODO: 在此处添加实现代码.
 	NOTIFYICONDATA nid;
@@ -594,7 +594,7 @@ void CMFCVedioDlg::toTray()
 	Shell_NotifyIcon(NIM_ADD, &nid); //在托盘区添加图标
 	this->ShowWindow(SW_HIDE); //隐藏主窗口
 }
-LRESULT CMFCVedioDlg::OnShowTask(WPARAM wParam, LPARAM lParam)
+LRESULT CDynamicWallpaperDlg::OnShowTask(WPARAM wParam, LPARAM lParam)
 {
 	switch (lParam){
 	case WM_RBUTTONUP:
@@ -618,7 +618,7 @@ LRESULT CMFCVedioDlg::OnShowTask(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-void CMFCVedioDlg::DeleteTray()
+void CDynamicWallpaperDlg::DeleteTray()
 {
 	NOTIFYICONDATA nid;
 	nid.cbSize = (DWORD)sizeof(NOTIFYICONDATA);
@@ -633,7 +633,7 @@ void CMFCVedioDlg::DeleteTray()
 }
 
 
-void CMFCVedioDlg::OnExitRmenu()
+void CDynamicWallpaperDlg::OnExitRmenu()
 {
 	// TODO: 在此添加命令处理程序代码
 	DeleteTray();
@@ -641,7 +641,7 @@ void CMFCVedioDlg::OnExitRmenu()
 }
 
 
-void CMFCVedioDlg::OnClose()
+void CDynamicWallpaperDlg::OnClose()
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	/*
@@ -665,7 +665,7 @@ void CMFCVedioDlg::OnClose()
 }
 
 
-void CMFCVedioDlg::OnCbnSelchangetransparent()
+void CDynamicWallpaperDlg::OnCbnSelchangetransparent()
 {
 	CString csValue;
 	int in = transparent.GetCurSel();
@@ -675,7 +675,7 @@ void CMFCVedioDlg::OnCbnSelchangetransparent()
 	setTransparent(n);
 }
 
-void CMFCVedioDlg::setTransparent(float transparent) {
+void CDynamicWallpaperDlg::setTransparent(float transparent) {
 
 	SetWindowLong(this->GetSafeHwnd(), GWL_EXSTYLE, GetWindowLong(this->GetSafeHwnd(), GWL_EXSTYLE) ^ 0x80000); HINSTANCE hInst = LoadLibrary(L"User32.DLL");
 	if (hInst)
@@ -691,7 +691,7 @@ void CMFCVedioDlg::setTransparent(float transparent) {
 }
 
 //判断程序是否开机自动启动
-BOOL CMFCVedioDlg::IsAutoBoot()
+BOOL CDynamicWallpaperDlg::IsAutoBoot()
 {
 	HKEY key;
 	LPBYTE path_Get = new BYTE[254];
@@ -714,7 +714,7 @@ BOOL CMFCVedioDlg::IsAutoBoot()
 
 
 
-char* CMFCVedioDlg::CString_char(CString str)
+char* CDynamicWallpaperDlg::CString_char(CString str)
 {
 
 	//注意：以下n和len的值大小不同，n是按字符计算的，len是按字节计算的
@@ -733,7 +733,7 @@ char* CMFCVedioDlg::CString_char(CString str)
 	return pFileName;
 }
 
-TCHAR* CMFCVedioDlg::char2TCAHR(char* str)
+TCHAR* CDynamicWallpaperDlg::char2TCAHR(char* str)
 {
 	int size = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
 	TCHAR* retStr = new TCHAR[size * sizeof(TCHAR)];
@@ -741,7 +741,7 @@ TCHAR* CMFCVedioDlg::char2TCAHR(char* str)
 	return retStr;
 }
 
-BOOL CMFCVedioDlg::AutoBootSet()
+BOOL CDynamicWallpaperDlg::AutoBootSet()
 {
 	HKEY hKey;
 
@@ -795,7 +795,7 @@ BOOL CMFCVedioDlg::AutoBootSet()
 
 
 //取消程序开机启动
-BOOL CMFCVedioDlg::AutoBootCancel()
+BOOL CDynamicWallpaperDlg::AutoBootCancel()
 {
 	HKEY hKey;
 	CString lpRun = _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
@@ -810,7 +810,7 @@ BOOL CMFCVedioDlg::AutoBootCancel()
 }
 
 
-void CMFCVedioDlg::OnBnClickedautostartstatus()
+void CDynamicWallpaperDlg::OnBnClickedautostartstatus()
 {
 	switch (this->IsDlgButtonChecked(IDC_autoStartStatus))
 	{
@@ -831,7 +831,7 @@ void CAboutDlg::OnBnClickedOk()
 }
 
 
-void CMFCVedioDlg::PostNcDestroy()
+void CDynamicWallpaperDlg::PostNcDestroy()
 {
 	//if (!mOldBackgroud.IsNull()) {
 	//	HDC hDC = ::GetWindowDC(workerw);
@@ -844,7 +844,7 @@ void CMFCVedioDlg::PostNcDestroy()
 	CDialogEx::PostNcDestroy();
 }
 
-void CMFCVedioDlg::restoresWallpaper() {
+void CDynamicWallpaperDlg::restoresWallpaper() {
 	HDC hDC = ::GetWindowDC(workerw);
 	::SetStretchBltMode(hDC, COLORONCOLOR);
 	CRect rect;
@@ -852,7 +852,7 @@ void CMFCVedioDlg::restoresWallpaper() {
 	DynamicBackground.Draw(hDC, rect);
 }
 
-int CMFCVedioDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
+int CDynamicWallpaperDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CDialogEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
@@ -870,15 +870,15 @@ int CMFCVedioDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 }
 
 
-void CMFCVedioDlg::setLoop() {
+void CDynamicWallpaperDlg::setLoop() {
 	cycleStatus = true;
 	cycleHandle = CreateThread(NULL, 0, loopPlayback, NULL, 0, NULL);
 }
 
-void CMFCVedioDlg::cancelLoop() {
+void CDynamicWallpaperDlg::cancelLoop() {
 	cycleStatus = false;
 }
-void CMFCVedioDlg::OnBnClickedloopplayer()
+void CDynamicWallpaperDlg::OnBnClickedloopplayer()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	switch (this->IsDlgButtonChecked(IDC_loopPlayer))
@@ -897,28 +897,28 @@ void CMFCVedioDlg::OnBnClickedloopplayer()
 	}
 }
 
-void CMFCVedioDlg::setAutoNextPlayThread() {
+void CDynamicWallpaperDlg::setAutoNextPlayThread() {
 	autoNextPlaystatus = true;
 	autoNextPlayHandle = CreateThread(NULL, 0, autoNextPlay, NULL, 0, NULL);
 }
-void CMFCVedioDlg::cancelAutoNextPlayThread() {
+void CDynamicWallpaperDlg::cancelAutoNextPlayThread() {
 	autoNextPlaystatus = false;
 }
 
-//void CMFCVedioDlg::OnBnClickedButton2()
+//void CDynamicWallpaperDlg::OnBnClickedButton2()
 //{
 //	vedioPlayer->set_stop();
 //	// TODO: 在此添加控件通知处理程序代码
 //}
 
 
-//void CMFCVedioDlg::OnBnClickedButton1()
+//void CDynamicWallpaperDlg::OnBnClickedButton1()
 //{
 //	// TODO: 在此添加控件通知处理程序代码
 //}
 
 
-void CMFCVedioDlg::OnBnClickedWaves()
+void CDynamicWallpaperDlg::OnBnClickedWaves()
 {
 	switch (this->IsDlgButtonChecked(IDC_Waves))
 	{
@@ -941,19 +941,19 @@ void CMFCVedioDlg::OnBnClickedWaves()
 	// TODO: 在此添加控件通知处理程序代码
 }
 
-void CMFCVedioDlg::setPutStonesThread() {
+void CDynamicWallpaperDlg::setPutStonesThread() {
 	putStonesStatus = true;
 	putStonesHandle = CreateThread(NULL, 0, putStones, date, 0, NULL);
 }
 
-void CMFCVedioDlg::cancelPutStonesThread() {
+void CDynamicWallpaperDlg::cancelPutStonesThread() {
 	//TerminateThread(putStonesHandle, 0);
 	putStonesStatus = false;
 	g_Ripple->cancelTimer();
 }
 
 //获取所有的文件名
-void CMFCVedioDlg::GetAllFiles(string path, vector<string>& wallpaperFilesName)
+void CDynamicWallpaperDlg::GetAllFiles(string path, vector<string>& wallpaperFilesName)
 {
 
 	intptr_t   hFile = 0;
@@ -974,7 +974,7 @@ void CMFCVedioDlg::GetAllFiles(string path, vector<string>& wallpaperFilesName)
 
 }
 
-long CMFCVedioDlg::wallpaperFileByte() {
+long CDynamicWallpaperDlg::wallpaperFileByte() {
 	
 	//vector<string> wallpaperFilesName;
 	////读取所有的文件，包括子文件的文件
@@ -1003,13 +1003,13 @@ long CMFCVedioDlg::wallpaperFileByte() {
 
 
 
-//void CMFCVedioDlg::OnLButtonDown(UINT nFlags, CPoint point)
+//void CDynamicWallpaperDlg::OnLButtonDown(UINT nFlags, CPoint point)
 //{
 //	// TODO: 在此添加消息处理程序代码和/或调用默认值
 //	g_Ripple->DropStone(point.x, point.y, 2, 2000);
 //	CDialogEx::OnLButtonDown(nFlags, point);
 //}
-DWORD CMFCVedioDlg::autoNextPlay(LPVOID lpParameter)
+DWORD CDynamicWallpaperDlg::autoNextPlay(LPVOID lpParameter)
 {
 	TCHAR szfilePath[MAX_PATH + 1];
 	GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
@@ -1032,7 +1032,7 @@ DWORD CMFCVedioDlg::autoNextPlay(LPVOID lpParameter)
 	return 0;
 }
 
-DWORD CMFCVedioDlg::putStones(LPVOID lpParameter)
+DWORD CDynamicWallpaperDlg::putStones(LPVOID lpParameter)
 {
 	CPoint mousePosition;
 	CPoint tempMousePosition;
@@ -1059,7 +1059,7 @@ DWORD CMFCVedioDlg::putStones(LPVOID lpParameter)
 	return 0;
 }
 
-DWORD CMFCVedioDlg::CursorMessage(LPVOID lpParameter) 
+DWORD CDynamicWallpaperDlg::CursorMessage(LPVOID lpParameter) 
 {
 	CPoint mousePosition;
 	
@@ -1101,17 +1101,20 @@ DWORD CMFCVedioDlg::CursorMessage(LPVOID lpParameter)
 	return 0;
 }
 
-DWORD CMFCVedioDlg::loopPlayback(LPVOID lpParameter)
+DWORD CDynamicWallpaperDlg::loopPlayback(LPVOID lpParameter)
 {
 	float temp;
+	Sleep(2700);
+	/*
 	Sleep(2700);
 	int vedioLength = date->vp->get_length();
 	int sleeptime = vedioLength / 11;
 	if (sleeptime==0) {
 		sleeptime = 300;
 	}
+	*/
 	while (1) {
-		Sleep(sleeptime);
+		Sleep(300);
 		temp = date->vp->get_position();
 		if (temp >= 0.9) {
 			date->vp->set_position(0.1);
@@ -1125,7 +1128,7 @@ DWORD CMFCVedioDlg::loopPlayback(LPVOID lpParameter)
 }
 
 
-//void CMFCVedioDlg::OnNMCustomdrawvolume(NMHDR* pNMHDR, LRESULT* pResult)
+//void CDynamicWallpaperDlg::OnNMCustomdrawvolume(NMHDR* pNMHDR, LRESULT* pResult)
 //{
 //	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
 //	// TODO: 在此添加控件通知处理程序代码

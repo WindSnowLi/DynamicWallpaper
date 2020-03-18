@@ -153,24 +153,28 @@ bool CRipple::InitRipple(HWND hWnd, HBITMAP hBmp, UINT uiSpeed)
 }
 
 void CRipple::startTimer() {
-	
+	/*
+	//@于2020/03/18取消CUDA计算
 	cudaMallocManaged(&templpWave1, sizeof(int) * m_iBmpWidth * m_iBmpHeight);
 	cudaMallocManaged(&templpWave2, sizeof(int) * m_iBmpWidth * m_iBmpHeight);
 
 	cudaMallocManaged(&tempM_pBmpRender, sizeof(BYTE) * m_iBytesPerWidth * m_iBmpHeight);
 	cudaMallocManaged(&tempM_pBmpSource, sizeof(BYTE) * m_iBytesPerWidth * m_iBmpHeight);
-
+	*/
 	SetTimer(m_hWnd, (UINT_PTR)this, tempUiSpeed, WaveTimerProc);
 }
 
 void CRipple::cancelTimer() {
 	KillTimer(m_hWnd, (UINT_PTR)this);
+
+	/*
+	//@于2020/03/18取消CUDA计算
 	cudaFree(templpWave1);
 	cudaFree(templpWave2);
 
 	cudaFree(tempM_pBmpRender);
 	cudaFree(tempM_pBmpSource);
-	
+	*/
 }
 /**
  * 功能：释放水波对象资源
@@ -220,7 +224,7 @@ void CRipple::FreeRipple()
 void CRipple::WaveSpread()
 {
 	
-	/*
+	
 	int* lpWave1 = m_pWaveBuf1;
 	int* lpWave2 = m_pWaveBuf2;
 	
@@ -233,10 +237,14 @@ void CRipple::WaveSpread()
 		//波能衰减
 		lpWave2[i] -= (lpWave2[i] >> 5);
 	}
-	*/
+	
 	//交换缓冲区
-	//m_pWaveBuf1 = lpWave2;
-	//m_pWaveBuf2 = lpWave1;
+	m_pWaveBuf1 = lpWave2;
+	m_pWaveBuf2 = lpWave1;
+	
+	/*
+	//@经过对比，重复赋值浪费了大量资源，计算速度不如纯CPU计算，在2020/03/18改回CPU运算
+
 	cudaMemcpy(templpWave1, m_pWaveBuf1, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyHostToDevice);
 	cudaMemcpy(templpWave2, m_pWaveBuf2, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyHostToDevice);
 	
@@ -244,11 +252,7 @@ void CRipple::WaveSpread()
 
 	cudaMemcpy(m_pWaveBuf2, templpWave1, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyDeviceToHost);
 	cudaMemcpy(m_pWaveBuf1, templpWave2, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyDeviceToHost);
-	//cudaFree(templpWave1);
-	//cudaFree(templpWave2);
-	
-	//m_pWaveBuf1 = lpWave2;
-	//m_pWaveBuf2 = lpWave1;
+	*/
 
 }
 
@@ -261,7 +265,7 @@ void CRipple::WaveSpread()
  */
 void CRipple::WaveRender()
 {
-	/*
+	
 	int iPtrSource = 0;
 	int iPtrRender = 0;
 	int lineIndex = m_iBmpWidth;
@@ -297,13 +301,14 @@ void CRipple::WaveRender()
 			lineIndex++;
 		}
 	}
-	*/
+	/*
+	//@经过对比，重复赋值浪费了大量资源，计算速度不如纯CPU计算，在2020/03/18改回CPU运算
 	cudaMemcpy(tempM_pBmpSource, m_pBmpSource, sizeof(BYTE) * m_iBytesPerWidth * m_iBmpHeight, cudaMemcpyHostToDevice);
 
 	ToCUDACUDAWaveRenderThreadStart(templpWave2, tempM_pBmpRender, tempM_pBmpSource,m_iBytesPerWidth,m_iBmpWidth,m_iBmpHeight);
 
 	cudaMemcpy(m_pBmpRender, tempM_pBmpRender, sizeof(BYTE) * m_iBytesPerWidth * m_iBmpHeight, cudaMemcpyDeviceToHost);
-
+	*/
 	//设置渲染后的位图
 	SetDIBits(m_hRenderDC, m_hRenderBmp, 0, m_iBmpHeight, m_pBmpRender, &m_stBitmapInfo, DIB_RGB_COLORS);
 }

@@ -31,8 +31,10 @@ public:
 	void WaveSpread();
 	//根据波幅渲染水波
 	void WaveRender();
-	int* templpWave1;     //Get ready to CUDA 波能缓冲区1
-	int* templpWave2;     //Get ready to CUDA 波能缓冲区1
+
+	//@于2020/03/18取消CUDA计算
+	//int* templpWave1;     //Get ready to CUDA 波能缓冲区1
+	//int* templpWave2;     //Get ready to CUDA 波能缓冲区1
 
 	BYTE* tempM_pBmpSource;  //Get ready to CUDA	水波位图原始数据
 	BYTE* tempM_pBmpRender;	//Get ready to CUDA		水波位图渲染数据

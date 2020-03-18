@@ -74,6 +74,9 @@
     <Image Include="C:\Users\70662\Desktop\新建文件夹\图片\P1.bmp">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="res\DynamicWallpaper.ico">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="CUDA.cu">

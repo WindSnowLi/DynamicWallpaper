@@ -325,7 +325,10 @@ void CRipple::WaveRender()
 void CRipple::UpdateFrame(HDC hDc)
 {
 	//BitBlt(hDc, 0, 0, m_iBmpWidth, m_iBmpHeight, m_hRenderDC, 0, 0, SRCCOPY);
-	BitBlt(::GetDC(workerw), 0, 0, m_iBmpWidth, m_iBmpHeight, m_hRenderDC, 0, 0, SRCCOPY);
+	HDC goalDC = ::GetDC(workerw);
+	BitBlt(goalDC, 0, 0, m_iBmpWidth, m_iBmpHeight, m_hRenderDC, 0, 0, SRCCOPY);
+	DeleteDC(goalDC);
+
 }
 
 /**

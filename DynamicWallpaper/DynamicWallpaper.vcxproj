@@ -232,6 +232,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="C:\Users\70662\Desktop\新建文件夹\图片\P1.bmp" />
+    <Image Include="res\DynamicWallpaper.ico" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="CUDA.cu" />

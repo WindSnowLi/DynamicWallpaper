@@ -74,6 +74,7 @@ private:
 	HANDLE cycleHandle;                 //循环播放线程句柄
 	HANDLE putStonesHandle;				//水波线程句柄
 	HANDLE autoNextPlayHandle;			//自动播放下一个句柄
+
 	CRipple* g_Ripple = new CRipple();
 	VedioPlayer* vedioPlayer = new VedioPlayer();
 
@@ -82,17 +83,25 @@ public:
 		LPVOID lpParameter   // thread data
 	);
 
-	static DWORD WINAPI putStones(				//水波纹线程
-		LPVOID lpParameter   // thread data
-	);
-
 	static DWORD WINAPI autoNextPlay(			//自动下一个线程
 		LPVOID lpParameter   // thread data
 	);
 
-	static DWORD WINAPI CursorMessage(			//检测鼠标状态线程
+
+	//水波纹连锁线程1
+	static DWORD WINAPI GetCursorDowncharWindowTitle(			//获得鼠标位置和鼠标下的窗口标题
 		LPVOID lpParameter   // thread data
 	);
+	//水波纹连锁线程2
+	static DWORD WINAPI CursorMovePutStones(			//鼠标移动水波纹线程
+		LPVOID lpParameter   // thread data
+	);
+	//水波纹连锁线程3
+	static DWORD WINAPI ClickPutStones(				//点击水波纹线程
+		LPVOID lpParameter   // thread data
+	);
+
+
 	static char* CString_char(CString str);
 	static string pathConvert(char* ch);
 	static CString char_CString(char* ch);
@@ -129,9 +138,9 @@ public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnBnClickedWaves();
-//	int slidingStrength;
-//	int clickStrength;
-//	afx_msg void OnNMCustomdrawvolume(NMHDR* pNMHDR, LRESULT* pResult);
-	CSliderCtrl SlidingStrength;
-	CSliderCtrl ClickStrength;
+
+	CSliderCtrl slidingFrequency;
+	CSliderCtrl clickFrequency;
+	CSliderCtrl slidingStrength;
+	CSliderCtrl clickStrength;
 };

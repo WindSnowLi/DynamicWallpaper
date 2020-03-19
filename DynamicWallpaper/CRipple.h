@@ -33,8 +33,8 @@ public:
 	void WaveRender();
 
 	//@于2020/03/18取消CUDA计算
-	//int* templpWave1;     //Get ready to CUDA 波能缓冲区1
-	//int* templpWave2;     //Get ready to CUDA 波能缓冲区1
+	int* AlpWave1;     //Get ready to CUDA 波能一级缓冲区A1
+	int* AlpWave2;     //Get ready to CUDA 波能一级缓冲区A2
 
 	BYTE* tempM_pBmpSource;  //Get ready to CUDA	水波位图原始数据
 	BYTE* tempM_pBmpRender;	//Get ready to CUDA		水波位图渲染数据

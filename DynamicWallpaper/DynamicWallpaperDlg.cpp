@@ -46,13 +46,16 @@ int overallClickStrength = 800;			//水波点击力度
 int overallSlidingStrength = 240;		//水波滑动力度
 int overallClickFrequency = 100;		//水波点击时间间隔
 int overallSlidingFrequency = 200;		//水波滑动时间间隔
+
 int getCursorTimerInterval=100;			//获得鼠标位置时间间隔
-bool putStonesStatus = false;           //水波线程状态		false为不执行
+
+
 bool cycleStatus = false;				//循环播放线程状态
 bool autoNextPlaystatus = false;		//自动播放下一个句柄
 int lineNumber;							//当前播放的行数
 long wallpaperSize;						//壁纸大小
-bool cursorThreadStatus = false;		//鼠标信息线程状态
+
+bool cursorThreadStatus = false;		//水波纹总线程状态，鼠标信息线程状态
 //视频子线程需要的数据源
 struct videoData {
 	VedioPlayer* vp;
@@ -972,13 +975,13 @@ void CDynamicWallpaperDlg::OnBnClickedWaves()
 }
 
 void CDynamicWallpaperDlg::setPutStonesThread() {
-	putStonesStatus = true;
+	cursorThreadStatus = true;
 	putStonesHandle = CreateThread(NULL, 0, GetCursorDowncharWindowTitle, videodata, 0, NULL);
 }
 
 void CDynamicWallpaperDlg::cancelPutStonesThread() {
 	//TerminateThread(putStonesHandle, 0);
-	putStonesStatus = false;
+	cursorThreadStatus = false;
 	g_Ripple->cancelTimer();
 }
 
@@ -1093,7 +1096,7 @@ DWORD CDynamicWallpaperDlg::CursorMovePutStones(LPVOID lpParameter)
 			tempMousePosition = mousePosition;
 			videodata->cr->DropStone(mousePosition.x, mousePosition.y, 2, overallSlidingStrength);
 		}
-		if (!putStonesStatus) {
+		if (!cursorThreadStatus) {
 			cursorThreadStatus = false;
 			break;
 		}

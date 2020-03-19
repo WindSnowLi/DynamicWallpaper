@@ -2,10 +2,19 @@
 #include "pch.h"
 #include "CRipple.h"
 #include <Windows.h>
-/*********************************************************/
-/* Description:位图特效实现文件							 */
-/* Author:小鑫											 */
-/*********************************************************/
+
+/*
+*
+*
+*@于2020/03/19测试，直接更改cudaMallocManaged创建的内存空间不可取，
+*回调函数一直在重复的执行CUDA渲染核线程，直接更改CUDA申请的内存会造成读写异常
+*
+*
+*
+*
+/
+
+
 
 /**
  * 功能：水波定时器回调函数，定时器回调函数不能放到类成员中
@@ -42,10 +51,7 @@ CRipple::CRipple()
 	m_iBmpWidth = 0;
 	m_iBmpHeight = 0;
 	m_iBytesPerWidth = 0;
-	m_pWaveBuf1 = NULL;
-	m_pWaveBuf2 = NULL;
-	m_pBmpSource = NULL;
-	m_pBmpRender = NULL;
+	
 	memset(&m_stBitmapInfo, 0, sizeof(m_stBitmapInfo));
 }
 
@@ -86,8 +92,8 @@ bool CRipple::InitRipple(HWND hWnd, HBITMAP hBmp, UINT uiSpeed)
 	m_pWaveBuf2 = new int[m_iBmpWidth * m_iBmpHeight];
 
 	//空间分配失败
-	if (m_pWaveBuf1 == NULL || m_pWaveBuf2 == NULL)
-		return false;
+	//if (m_pWaveBuf1 == NULL || m_pWaveBuf2 == NULL)
+	//	return false;
 
 	memset(m_pWaveBuf1, 0, sizeof(int) * m_iBmpWidth * m_iBmpHeight);
 	memset(m_pWaveBuf2, 0, sizeof(int) * m_iBmpWidth * m_iBmpHeight);
@@ -97,8 +103,8 @@ bool CRipple::InitRipple(HWND hWnd, HBITMAP hBmp, UINT uiSpeed)
 	m_pBmpRender = new BYTE[m_iBytesPerWidth * m_iBmpHeight];
 
 	//空间分配失败
-	if (m_pBmpSource == NULL || m_pBmpRender == NULL)
-		return false;
+	//if (m_pBmpSource == NULL || m_pBmpRender == NULL)
+	//	return false;
 
 	HDC hDc = GetDC(m_hWnd);
 
@@ -148,33 +154,34 @@ bool CRipple::InitRipple(HWND hWnd, HBITMAP hBmp, UINT uiSpeed)
 
 	//设置定时器
 	tempUiSpeed = uiSpeed;
-	//SetTimer(m_hWnd, (UINT_PTR)this, uiSpeed, WaveTimerProc);
 	return true;
 }
 
 void CRipple::startTimer() {
-	/*
-	//@于2020/03/18取消CUDA计算
-	cudaMallocManaged(&templpWave1, sizeof(int) * m_iBmpWidth * m_iBmpHeight);
-	cudaMallocManaged(&templpWave2, sizeof(int) * m_iBmpWidth * m_iBmpHeight);
+	
+	//@于2020/03/19，取消重复整体赋值，继续保持GPU运算
+	cudaMallocManaged(&AlpWave1, sizeof(int) * m_iBmpWidth * m_iBmpHeight);
+	cudaMallocManaged(&AlpWave2, sizeof(int) * m_iBmpWidth * m_iBmpHeight);
 
 	cudaMallocManaged(&tempM_pBmpRender, sizeof(BYTE) * m_iBytesPerWidth * m_iBmpHeight);
 	cudaMallocManaged(&tempM_pBmpSource, sizeof(BYTE) * m_iBytesPerWidth * m_iBmpHeight);
-	*/
+
+	cudaMemcpy(AlpWave1, 0, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyHostToDevice);
+	cudaMemcpy(AlpWave2, 0, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyHostToDevice);
+
+	cudaMemcpy(tempM_pBmpSource, m_pBmpSource, sizeof(BYTE) * m_iBytesPerWidth * m_iBmpHeight, cudaMemcpyHostToDevice);
+	cudaMemcpy(tempM_pBmpRender, m_pBmpRender, sizeof(BYTE) * m_iBytesPerWidth * m_iBmpHeight, cudaMemcpyHostToDevice);
 	SetTimer(m_hWnd, (UINT_PTR)this, tempUiSpeed, WaveTimerProc);
 }
 
 void CRipple::cancelTimer() {
 	KillTimer(m_hWnd, (UINT_PTR)this);
-
-	/*
-	//@于2020/03/18取消CUDA计算
-	cudaFree(templpWave1);
-	cudaFree(templpWave2);
+	//@于2020/03/19，取消重复整体赋值，继续保持GPU运算
+	cudaFree(AlpWave1);
+	cudaFree(AlpWave2);
 
 	cudaFree(tempM_pBmpRender);
 	cudaFree(tempM_pBmpSource);
-	*/
 }
 /**
  * 功能：释放水波对象资源
@@ -194,6 +201,7 @@ void CRipple::FreeRipple()
 	{
 		DeleteObject(m_hRenderBmp);
 	}
+	
 	if (m_pWaveBuf1 != NULL)
 	{
 		delete[]m_pWaveBuf1;
@@ -210,6 +218,7 @@ void CRipple::FreeRipple()
 	{
 		delete[]m_pBmpRender;
 	}
+	
 	//杀定时器
 	KillTimer(m_hWnd, (UINT_PTR)this);
 }
@@ -223,37 +232,12 @@ void CRipple::FreeRipple()
  */
 void CRipple::WaveSpread()
 {
-	
-	
-	int* lpWave1 = m_pWaveBuf1;
-	int* lpWave2 = m_pWaveBuf2;
-	
-	for (int i = m_iBmpWidth; i < (m_iBmpHeight - 1) * m_iBmpWidth; i++)
-	{
-		//波能扩散
-		lpWave2[i] = ((lpWave1[i - 1] + lpWave1[i - m_iBmpWidth] +
-			lpWave1[i + 1] + lpWave1[i + m_iBmpWidth]) >>1) - lpWave2[i];
+	//@于2020/03/19，取消重复整体赋值，继续保持GPU运算
+	ToCUDAWaveSpreadThreadStart(AlpWave1, AlpWave2, m_iBmpWidth, m_iBmpHeight);
 
-		//波能衰减
-		lpWave2[i] -= (lpWave2[i] >> 5);
-	}
-	
-	//交换缓冲区
-	m_pWaveBuf1 = lpWave2;
-	m_pWaveBuf2 = lpWave1;
-	
-	/*
-	//@经过对比，重复赋值浪费了大量资源，计算速度不如纯CPU计算，在2020/03/18改回CPU运算
-
-	cudaMemcpy(templpWave1, m_pWaveBuf1, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyHostToDevice);
-	cudaMemcpy(templpWave2, m_pWaveBuf2, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyHostToDevice);
-	
-	ToCUDAWaveSpreadThreadStart(templpWave1, templpWave2, m_iBmpWidth, m_iBmpHeight);
-
-	cudaMemcpy(m_pWaveBuf2, templpWave1, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyDeviceToHost);
-	cudaMemcpy(m_pWaveBuf1, templpWave2, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyDeviceToHost);
-	*/
-
+	int* AlpWave = AlpWave1;
+	AlpWave1 = AlpWave2;
+	AlpWave2 = AlpWave;
 }
 
 /**
@@ -265,52 +249,13 @@ void CRipple::WaveSpread()
  */
 void CRipple::WaveRender()
 {
-	
-	int iPtrSource = 0;
-	int iPtrRender = 0;
-	int lineIndex = m_iBmpWidth;
-	int iPosX = 0;
-	int iPosY = 0;
-
-	//扫描位图
-	for (int y = 1; y < m_iBmpHeight - 1; y++)
-	{
-		for (int x = 0; x < m_iBmpWidth; x++)
-		{
-			//根据波幅计算位图数据偏移值，渲染点（x，y)对应原始图片（iPosX，iPosY）
-			iPosX = x + (m_pWaveBuf1[lineIndex - 1] - m_pWaveBuf1[lineIndex + 1]);
-			iPosY = y + (m_pWaveBuf1[lineIndex - m_iBmpWidth] - m_pWaveBuf1[lineIndex + m_iBmpWidth]);
-			//另外一种计算偏移的方法
-			//int waveData = (1024 - m_pWaveBuf1[lineIndex]);
-			//iPosX = (x - m_iBmpWidth/2)*waveData/1024 + m_iBmpWidth/2;
-			//iPosY = (y - m_iBmpHeight/2)*waveData/1024 + m_iBmpHeight/2;
-
-			if (0 <= iPosX && iPosX < m_iBmpWidth &&
-				0 <= iPosY && iPosY < m_iBmpHeight)
-			{
-				//分别计算原始位图（iPosX，iPosY）和渲染位图（x，y)对应的起始位图数据
-				iPtrSource = iPosY * m_iBytesPerWidth + iPosX * 3;
-				iPtrRender = y * m_iBytesPerWidth + x * 3;
-				//渲染位图，重新打点数据
-				for (int c = 0; c < 3; c++)
-				{
-					m_pBmpRender[iPtrRender + c] = m_pBmpSource[iPtrSource + c];
-				}
-			}
-
-			lineIndex++;
-		}
-	}
-	/*
-	//@经过对比，重复赋值浪费了大量资源，计算速度不如纯CPU计算，在2020/03/18改回CPU运算
+	//@于2020/03/19，取消重复整体赋值，继续保持GPU运算
 	cudaMemcpy(tempM_pBmpSource, m_pBmpSource, sizeof(BYTE) * m_iBytesPerWidth * m_iBmpHeight, cudaMemcpyHostToDevice);
-
-	ToCUDACUDAWaveRenderThreadStart(templpWave2, tempM_pBmpRender, tempM_pBmpSource,m_iBytesPerWidth,m_iBmpWidth,m_iBmpHeight);
-
-	cudaMemcpy(m_pBmpRender, tempM_pBmpRender, sizeof(BYTE) * m_iBytesPerWidth * m_iBmpHeight, cudaMemcpyDeviceToHost);
-	*/
+	ToCUDACUDAWaveRenderThreadStart(AlpWave1, tempM_pBmpRender, tempM_pBmpSource,m_iBytesPerWidth,m_iBmpWidth,m_iBmpHeight);
+	///投入波源、图片渲染以及计算波幅的线程并行，会无形中修改tempM_pBmpSource的值，具体原因未知，以向tempM_pBmpSource重复赋值暂避
+	
 	//设置渲染后的位图
-	SetDIBits(m_hRenderDC, m_hRenderBmp, 0, m_iBmpHeight, m_pBmpRender, &m_stBitmapInfo, DIB_RGB_COLORS);
+	SetDIBits(m_hRenderDC, m_hRenderBmp, 0, m_iBmpHeight, tempM_pBmpRender, &m_stBitmapInfo, DIB_RGB_COLORS);
 }
 
 /**
@@ -341,30 +286,8 @@ void CRipple::UpdateFrame(HDC hDc)
  * 返回值：
  *		void
  */
+
 void CRipple::DropStone(int x, int y, int stoneSize, int stoneWeight)
-{
-	int posX = 0;
-	int posY = 0;
-
-	for (int i = -stoneSize; i < stoneSize; i++)
-	{
-		for (int j = -stoneSize; j < stoneSize; j++)
-		{
-			posX = x + i;
-			posY = y + j;
-
-			//控制范围，不能超出图片
-			if (posX < 0 || posX >= m_iBmpWidth ||
-				posY < 0 || posY >= m_iBmpHeight)
-			{
-				continue;
-			}
-
-			//在一个圆形区域内，初始化波能缓冲区1
-			if (i * i + j * j <= stoneSize * stoneSize)
-			{
-				m_pWaveBuf1[posY * m_iBmpWidth + posX] = stoneWeight;
-			}
-		}
-	}
+{	
+	ToModifyCUDALpWaveThreadStart(AlpWave2, m_iBmpWidth, m_iBmpHeight, x, y, stoneSize, stoneWeight);
 }

@@ -17,7 +17,7 @@
  * 返回值：
  *		void
  */
-bool allTerminateCallBack=true;
+HDC goalhDC = NULL;
 static void CALLBACK WaveTimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 {
 	CRipple* pRipple = (CRipple*)idEvent;
@@ -26,11 +26,11 @@ static void CALLBACK WaveTimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD
 	pRipple->WaveSpread();
 	pRipple->WaveRender();
 
-	HDC hDc = GetDC(hWnd);
+	//HDC hDc = GetDC(hWnd);
 
 	//刷新到屏幕
-	pRipple->UpdateFrame(hDc);
-	ReleaseDC(hWnd, hDc);
+	pRipple->UpdateFrame(goalhDC);
+	//ReleaseDC(hWnd, hDc);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -153,19 +153,13 @@ bool CRipple::InitRipple(HWND hWnd, HBITMAP hBmp, UINT uiSpeed)
 }
 
 void CRipple::startTimer() {
-	/*
-	//@于2020/03/18取消CUDA计算
-	cudaMallocManaged(&templpWave1, sizeof(int) * m_iBmpWidth * m_iBmpHeight);
-	cudaMallocManaged(&templpWave2, sizeof(int) * m_iBmpWidth * m_iBmpHeight);
-
-	cudaMallocManaged(&tempM_pBmpRender, sizeof(BYTE) * m_iBytesPerWidth * m_iBmpHeight);
-	cudaMallocManaged(&tempM_pBmpSource, sizeof(BYTE) * m_iBytesPerWidth * m_iBmpHeight);
-	*/
+	goalhDC = ::GetDC(workerw);
 	SetTimer(m_hWnd, (UINT_PTR)this, tempUiSpeed, WaveTimerProc);
 }
 
 void CRipple::cancelTimer() {
 	KillTimer(m_hWnd, (UINT_PTR)this);
+	DeleteDC(goalhDC);
 
 	/*
 	//@于2020/03/18取消CUDA计算
@@ -211,7 +205,7 @@ void CRipple::FreeRipple()
 		delete[]m_pBmpRender;
 	}
 	//杀定时器
-	KillTimer(m_hWnd, (UINT_PTR)this);
+//	KillTimer(m_hWnd, (UINT_PTR)this);
 }
 
 /**
@@ -241,19 +235,6 @@ void CRipple::WaveSpread()
 	//交换缓冲区
 	m_pWaveBuf1 = lpWave2;
 	m_pWaveBuf2 = lpWave1;
-	
-	/*
-	//@经过对比，重复赋值浪费了大量资源，计算速度不如纯CPU计算，在2020/03/18改回CPU运算
-
-	cudaMemcpy(templpWave1, m_pWaveBuf1, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyHostToDevice);
-	cudaMemcpy(templpWave2, m_pWaveBuf2, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyHostToDevice);
-	
-	ToCUDAWaveSpreadThreadStart(templpWave1, templpWave2, m_iBmpWidth, m_iBmpHeight);
-
-	cudaMemcpy(m_pWaveBuf2, templpWave1, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyDeviceToHost);
-	cudaMemcpy(m_pWaveBuf1, templpWave2, sizeof(int) * m_iBmpWidth * m_iBmpHeight, cudaMemcpyDeviceToHost);
-	*/
-
 }
 
 /**
@@ -324,11 +305,7 @@ void CRipple::WaveRender()
 
 void CRipple::UpdateFrame(HDC hDc)
 {
-	//BitBlt(hDc, 0, 0, m_iBmpWidth, m_iBmpHeight, m_hRenderDC, 0, 0, SRCCOPY);
-	HDC goalDC = ::GetDC(workerw);
-	BitBlt(goalDC, 0, 0, m_iBmpWidth, m_iBmpHeight, m_hRenderDC, 0, 0, SRCCOPY);
-	DeleteDC(goalDC);
-
+	BitBlt(hDc, 0, 0, m_iBmpWidth, m_iBmpHeight, m_hRenderDC, 0, 0, SRCCOPY);
 }
 
 /**

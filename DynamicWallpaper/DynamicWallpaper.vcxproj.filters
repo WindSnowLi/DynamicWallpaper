@@ -27,9 +27,6 @@
     <ClInclude Include="pch.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="VedioPlayer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="CRipple.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -42,12 +39,12 @@
     <ClInclude Include="DynamicWallpaperDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="VideoPlayer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="VedioPlayer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CRipple.cpp">
@@ -57,6 +54,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="DynamicWallpaperDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="VideoPlayer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

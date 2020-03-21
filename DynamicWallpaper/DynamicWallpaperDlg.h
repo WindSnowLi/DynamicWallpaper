@@ -10,7 +10,7 @@
 #include <thread>
 #include <fstream>
 #include <string>
-#include "VedioPlayer.h"
+#include "VideoPlayer.h"
 #include "CRipple.h"
 #include <io.h>
 #include <vector>
@@ -49,7 +49,7 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
-	char* EncodeToUTF8(const char* mbcsStr);
+	static char* EncodeToUTF8(const char* mbcsStr);
 	DECLARE_MESSAGE_MAP()
 public:
 	CEdit filepath;
@@ -59,10 +59,6 @@ public:
 	CComboBox transparent;
 	CButton autoStartStatus;
 
-	/*struct putStonesDate {
-		CRipple* cr;
-	};
-	putStonesDate* putstonesdate = new putStonesDate();*/
 private:
 	CImage DynamicBackground;
 	CBitmap* buffBitmap;
@@ -76,7 +72,7 @@ private:
 	HANDLE autoNextPlayHandle;			//自动播放下一个句柄
 
 	CRipple* g_Ripple = new CRipple();
-	VedioPlayer* vedioPlayer = new VedioPlayer();
+	VideoPlayer* videoPlayer = new VideoPlayer();
 
 public:
 	static DWORD WINAPI  loopPlayback(          //循环播放线程
@@ -88,19 +84,22 @@ public:
 	);
 
 
-	//水波纹连锁线程1
+	//水波纹线程
 	static DWORD WINAPI GetCursorDowncharWindowTitle(			//获得鼠标位置和鼠标下的窗口标题
 		LPVOID lpParameter   // thread data
 	);
-	//水波纹连锁线程2
+	//水波纹线程
 	static DWORD WINAPI CursorMovePutStones(			//鼠标移动水波纹线程
 		LPVOID lpParameter   // thread data
 	);
-	//水波纹连锁线程3
+	//水波纹线程
 	static DWORD WINAPI ClickPutStones(				//点击水波纹线程
 		LPVOID lpParameter   // thread data
 	);
 
+	static DWORD WINAPI CheckSystemWallpaper(				//点击水波纹线程
+		LPVOID lpParameter   // thread data
+	);
 
 	static char* CString_char(CString str);
 	static string pathConvert(char* ch);
@@ -143,4 +142,5 @@ public:
 	CSliderCtrl clickFrequency;
 	CSliderCtrl slidingStrength;
 	CSliderCtrl clickStrength;
+	afx_msg void OnBnClickedStopvideo();
 };

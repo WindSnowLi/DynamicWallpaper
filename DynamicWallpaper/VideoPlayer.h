@@ -6,7 +6,7 @@
 #pragma comment(lib, "libvlccore.lib")
 using namespace std;
 #pragma once
-class VedioPlayer
+class VideoPlayer
 {
 private:
 	libvlc_instance_t* inst = NULL;

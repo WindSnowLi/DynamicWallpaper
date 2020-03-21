@@ -42,20 +42,35 @@ CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
 }
 
 HWND workerw;
-int overallClickStrength = 800;			//水波点击力度
-int overallSlidingStrength = 240;		//水波滑动力度
-int overallClickFrequency = 100;		//水波点击时间间隔
-int overallSlidingFrequency = 200;		//水波滑动时间间隔
-int getCursorTimerInterval=100;			//获得鼠标位置时间间隔
-bool putStonesStatus = false;           //水波线程状态		false为不执行
-bool cycleStatus = false;				//循环播放线程状态
-bool autoNextPlaystatus = false;		//自动播放下一个句柄
-int lineNumber;							//当前播放的行数
-long wallpaperSize;						//壁纸大小
-bool cursorThreadStatus = false;		//鼠标信息线程状态
+//水波点击力度
+int overallClickStrength = 800;
+//水波滑动力度
+int overallSlidingStrength = 240;
+//水波点击时间间隔
+int overallClickFrequency = 100;
+//水波滑动时间间隔
+int overallSlidingFrequency = 200;
+//获得鼠标位置时间间隔
+int getCursorTimerInterval=100;
+//循环播放线程状态
+bool cycleStatus = false;
+//自动播放下一个
+bool autoNextPlaystatus = false;
+//当前播放的行数
+int lineNumber;
+//壁纸大小
+long wallpaperSize;
+//鼠标位置信息线程状态		false为不执行
+bool cursorThreadStatus = false;
+//水波纹点击线程状态
+bool clikThreadStatus = false;
+//滑动水波线程状态
+bool slidingThreadStatus = false;
+//检查系统壁纸线程状态
+bool checkSystemThreadStatus = false;	
 //视频子线程需要的数据源
 struct videoData {
-	VedioPlayer* vp;
+	VideoPlayer* vp;
 	CRipple* cr;
 	CImage* ci;
 };
@@ -123,6 +138,7 @@ BEGIN_MESSAGE_MAP(CDynamicWallpaperDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_loopPlayer, &CDynamicWallpaperDlg::OnBnClickedloopplayer)
 	ON_BN_CLICKED(IDC_Waves, &CDynamicWallpaperDlg::OnBnClickedWaves)
 	ON_WM_LBUTTONDOWN()
+	ON_BN_CLICKED(IDC_StopVideo, &CDynamicWallpaperDlg::OnBnClickedStopvideo)
 END_MESSAGE_MAP()
 
 
@@ -176,7 +192,7 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	SendMessageTimeout(hwnd_progman, 0x052c, NULL, NULL, SMTO_NORMAL, 1000, &result);
 
 	EnumWindows(EnumwindowProcFindDesktopwindow, NULL);
-	vedioPlayer->workerw = workerw;
+	videoPlayer->workerw = workerw;
 	g_Ripple->workerw = workerw;
 
 	int index = transparent.FindStringExact(0, _T("0.4"));
@@ -187,7 +203,7 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 
 
 	//初始化子线程需要的数据
-	videodata->vp = vedioPlayer;
+	videodata->vp = videoPlayer;
 	videodata->cr = g_Ripple;
 	videodata->ci = &DynamicBackground;
 	/*
@@ -245,7 +261,8 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 			string fileBuff;
 			fileBuff = judgeFile(tempSzfilePath);
 			if (judgeVedioFile((char*)fileBuff.c_str())) {
-				vedioPlayer->loadPlayer(EncodeToUTF8((char*)fileBuff.c_str()));
+				char* waitDelete = EncodeToUTF8((char*)fileBuff.c_str());
+				videoPlayer->loadPlayer(waitDelete);
 				GetDlgItem(IDC_FILEPath)->SetWindowTextW(char_CString((char*)fileBuff.c_str()));
 				SetTimer(2, 10, NULL);
 				setLoop();
@@ -259,7 +276,6 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	
 	wallpaperSize = wallpaperFileByte();
 	DynamicBackground.Load(char_CString((char*)pathConvert((char*)buffWallpaperFilePath.c_str()).c_str()));
-	//MessageBox(char_CString((char*)pathConvert((char*)buffWallpaperFilePath.c_str()).c_str()));
 	
 	PathRemoveFileSpec(szfilePath);//得到应用程序路径
 	PathAppend(szfilePath, _T("Spare.jpg"));//添加文件名构造出绝对路径
@@ -270,7 +286,7 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	buffImg = &DynamicBackground;
 
 	HBITMAP hbmp = (HBITMAP)buffImg->operator HBITMAP();
-	g_Ripple->InitRipple(GetSafeHwnd(), hbmp, 30);
+	g_Ripple->InitRipple(GetSafeHwnd(), hbmp, 20);
 
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
@@ -465,13 +481,15 @@ void CDynamicWallpaperDlg::OnBnClickedSelectfile()
 	USES_CONVERSION;
 	if (dlg.DoModal() == IDOK)
 	{
-		cycleStatus = false;
+		cancelLoop();
 		filePath = dlg.GetPathName();
 		videopath = T2A(filePath);
-		vedioPlayer->loadPlayer(EncodeToUTF8(pathConvert(videopath).c_str()));
+		char* waitDelete = EncodeToUTF8(pathConvert(videopath).c_str());
+		videoPlayer->loadPlayer(waitDelete);
+		free(waitDelete);
 		GetDlgItem(IDC_FILEPath)->SetWindowTextW(filePath);
-		TCHAR startfilePath[MAX_PATH + 1];
 
+		TCHAR startfilePath[MAX_PATH + 1];
 		GetModuleFileName(0, startfilePath, MAX_PATH);
 		PathRemoveFileSpec(startfilePath);//得到应用程序路径
 		PathAppend(startfilePath,_T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
@@ -483,7 +501,6 @@ void CDynamicWallpaperDlg::OnBnClickedSelectfile()
 		outfile << write;
 		outfile.close();
 		if (((CButton*)GetDlgItem(IDC_loopPlayer))->GetCheck() == 1) {
-			cycleStatus = true;
 			setLoop();
 		}
 	}
@@ -497,9 +514,9 @@ void CDynamicWallpaperDlg::OnTimer(UINT_PTR nIDEvent)
 	float temp;
 	switch (nIDEvent) {
 	case 1:
-		//temp = vedioPlayer->get_position();
+		//temp = videoPlayer->get_position();
 		//if (temp >= 0.9) {
-		//	vedioPlayer->set_position(0.1);
+		//	videoPlayer->set_position(0.1);
 		//}
 		break;
 	case 2:
@@ -508,7 +525,7 @@ void CDynamicWallpaperDlg::OnTimer(UINT_PTR nIDEvent)
 		KillTimer(2);
 		break;
 	case 3:
-		//if (vedioPlayer->get_position()>=0.9) {
+		//if (videoPlayer->get_position()>=0.9) {
 		//	TCHAR szfilePath[MAX_PATH + 1];
 		//	GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
 		//	PathRemoveFileSpec(szfilePath);//得到应用程序路径
@@ -516,8 +533,8 @@ void CDynamicWallpaperDlg::OnTimer(UINT_PTR nIDEvent)
 		//	string loopPath = judgeFile(CString_char(szfilePath));
 		//	ifstream test(loopPath);
 		//	if (test) {
-		//		vedioPlayer->loadPlayer((char*)loopPath.c_str());
-		//		vedioPlayer->set_position(0.05);
+		//		videoPlayer->loadPlayer((char*)loopPath.c_str());
+		//		videoPlayer->set_position(0.05);
 		//	}
 		//}
 		break;
@@ -528,12 +545,13 @@ void CDynamicWallpaperDlg::OnTimer(UINT_PTR nIDEvent)
 		g_Ripple->DropStone(cx, cy, 2, 256);*/
 		break;
 	case 5:
+		/*
 		if (wallpaperSize != wallpaperFileByte()) {
 			wallpaperSize = wallpaperFileByte();
 			//KillTimer(4);
 			cancelPutStonesThread();
 			//g_Ripple->cancelTimer();
-
+			*/
 			//HDC hDC = ::GetWindowDC(workerw);
 			//int nBitPerPixel = GetDeviceCaps(hDC, BITSPIXEL);
 			//int nWidth = GetDeviceCaps(hDC, HORZRES);
@@ -542,27 +560,20 @@ void CDynamicWallpaperDlg::OnTimer(UINT_PTR nIDEvent)
 			//DynamicBackground.Create(nWidth, nHeight, nBitPerPixel);
 			//BitBlt(DynamicBackground.GetDC(), 0, 0, nWidth, nHeight, hDC, 0, 0, SRCCOPY);
 			//DynamicBackground.ReleaseDC();
+		/*
 			DynamicBackground.Destroy();
 			DynamicBackground.Load(char_CString((char*)buffWallpaperFilePath.c_str()));
-			if (DynamicBackground.IsNull()) {
-				PathRemoveFileSpec(szfilePath);//得到应用程序路径
-				PathAppend(szfilePath, _T("Spare.jpg"));//添加文件名构造出绝对路径
-				DynamicBackground.Load(szfilePath);
-			}
-			
+			//g_Ripple->FreeRipple();
+
 			buffImg = &DynamicBackground;
 			hBmpRipple = (HBITMAP)buffImg->operator HBITMAP();
 
-			delete g_Ripple;
-			g_Ripple = NULL;
-			g_Ripple = new CRipple();
-			g_Ripple->workerw = workerw;
 
 			g_Ripple->InitRipple(GetSafeHwnd(), hBmpRipple, 30);
 			g_Ripple->startTimer();
 			//SetTimer(4, 100, NULL);
 			setPutStonesThread();
-		}
+		}*/
 		break;
 	}
 	CDialogEx::OnTimer(nIDEvent);
@@ -579,7 +590,7 @@ void CDynamicWallpaperDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrol
 	b.Format(_T("%d"), pos);
 	switch (pSlidCtrl->GetDlgCtrlID()) {
 	case IDC_volume:
-		vedioPlayer->setVolume(pos);
+		videoPlayer->setVolume(pos);
 		GetDlgItem(IDC_showVolume)->SetWindowTextW(b);
 		break;
 	case IDC_SlidingStrength:
@@ -588,16 +599,16 @@ void CDynamicWallpaperDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrol
 		break;
 	case IDC_ClickStrength:
 		overallClickStrength = pos*20;
-		GetDlgItem(IDC_showClickFrequency)->SetWindowTextW(b);
+		GetDlgItem(IDC_showClickStrength)->SetWindowTextW(b);
 		break;
 	case IDC_SlidingFrequency:
 		overallSlidingFrequency = 1000 / pos;
-		getCursorTimerInterval=overallSlidingFrequency > overallClickStrength ? overallClickStrength : overallSlidingFrequency;
+		getCursorTimerInterval=overallSlidingFrequency > overallClickFrequency ? overallClickFrequency : overallSlidingFrequency;
 		GetDlgItem(IDC_showSlidingFrequency)->SetWindowTextW(b);
 		break;
 	case IDC_ClickFrequency:
 		overallClickFrequency = 1000 / pos;
-		getCursorTimerInterval=overallSlidingFrequency > overallClickStrength ? overallClickStrength : overallSlidingFrequency;
+		getCursorTimerInterval=overallSlidingFrequency > overallClickFrequency ? overallClickFrequency : overallSlidingFrequency;
 		GetDlgItem(IDC_showClickFrequency)->SetWindowTextW(b);
 		break;
 	}
@@ -729,7 +740,7 @@ BOOL CDynamicWallpaperDlg::IsAutoBoot()
 	if (RegOpenKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"), 0, KEY_READ, &key) == ERROR_SUCCESS)
 	{
 		// 查询注册表 值
-		if (RegQueryValueEx(key, _T("MFCVedio"), 0, &type, path_Get, &dwBytes) == ERROR_SUCCESS){
+		if (RegQueryValueEx(key, _T("MFCVideo"), 0, &type, path_Get, &dwBytes) == ERROR_SUCCESS){
 			temp = true;
 		}
 		else{
@@ -737,7 +748,7 @@ BOOL CDynamicWallpaperDlg::IsAutoBoot()
 		}
 	}
 	RegCloseKey(key);
-	delete path_Get;
+	delete []path_Get;
 	return temp;
 }
 
@@ -800,7 +811,7 @@ BOOL CDynamicWallpaperDlg::AutoBootSet()
 		CopyMemory(expected, bp, sizeof(expected));
 
 	
-		lRet = RegSetValueEx(hKey, _T("MFCVedio"), 0, REG_SZ, bp, (lstrlen(ss) + 1) * sizeof(TCHAR)); 
+		lRet = RegSetValueEx(hKey, _T("MFCVideo"), 0, REG_SZ, bp, (lstrlen(ss) + 1) * sizeof(TCHAR)); 
 		RegCloseKey(hKey);
 		/*
 		
@@ -811,7 +822,7 @@ BOOL CDynamicWallpaperDlg::AutoBootSet()
 
 		CRegKey key1;
 		key1.Open(HKEY_CURRENT_USER, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce"));
-		key1.SetStringValue(_T("MFCVedio"), ss);
+		key1.SetStringValue(_T("MFCVideo"), ss);
 		key1.Close();
 		delete temp1;
 		if (lRet != ERROR_SUCCESS)
@@ -830,11 +841,11 @@ BOOL CDynamicWallpaperDlg::AutoBootCancel()
 	HKEY hKey;
 	CString lpRun = _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
 	long lRet = RegOpenKeyEx(HKEY_CURRENT_USER, lpRun, 0, KEY_ALL_ACCESS, &hKey);
-	RegDeleteValue(hKey, _T("MFCVedio"));
+	RegDeleteValue(hKey, _T("MFCVideo"));
 	RegCloseKey(hKey);
 	CRegKey key1;
 	key1.Open(HKEY_CURRENT_USER, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce"));
-	key1.SetStringValue(_T("MFCVedio"), L" ");
+	key1.SetStringValue(_T("MFCVideo"), L" ");
 	key1.Close();
 	return true;
 }
@@ -870,7 +881,10 @@ void CDynamicWallpaperDlg::PostNcDestroy()
 	//	::GetWindowRect(workerw, &rect);
 	//	mOldBackgroud.Draw(hDC, rect);
 	//}
+	cancelPutStonesThread();
+	delete g_Ripple;
 	restoresWallpaper();
+	
 	CDialogEx::PostNcDestroy();
 }
 
@@ -886,7 +900,7 @@ int CDynamicWallpaperDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CDialogEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
-	HANDLE   hMutex = ::CreateMutex(NULL, TRUE, L"MFCVedio");
+	HANDLE   hMutex = ::CreateMutex(NULL, TRUE, L"MFCVideo");
 	if (hMutex != NULL)
 	{
 		if (GetLastError() == ERROR_ALREADY_EXISTS)
@@ -935,33 +949,33 @@ void CDynamicWallpaperDlg::cancelAutoNextPlayThread() {
 	autoNextPlaystatus = false;
 }
 
-//void CDynamicWallpaperDlg::OnBnClickedButton2()
-//{
-//	vedioPlayer->set_stop();
-//	// TODO: 在此添加控件通知处理程序代码
-//}
-
-
-//void CDynamicWallpaperDlg::OnBnClickedButton1()
-//{
-//	// TODO: 在此添加控件通知处理程序代码
-//}
-
 
 void CDynamicWallpaperDlg::OnBnClickedWaves()
 {
+	struct DWDlg {
+		CDynamicWallpaperDlg* dw;
+		CRipple* cp;
+		CRipple** CP;
+	};
+	DWDlg* dwdlg = new DWDlg();
 	switch (this->IsDlgButtonChecked(IDC_Waves))
 	{
 	case BST_CHECKED:
-		SetTimer(5, 3000, NULL);
+		//SetTimer(5, 3000, NULL);
+
+		dwdlg->dw = this;
+		dwdlg->cp = g_Ripple;
+		dwdlg->CP = &g_Ripple;
+		setPutStonesThread();
+		CreateThread(NULL, 0, CheckSystemWallpaper, dwdlg, 0, 0);
 		//SetTimer(4, 100, NULL);
 		//putstonesdate->cr = g_Ripple;
-		setPutStonesThread();
 		//g_Ripple->startTimer();
 		break;
 	case BST_UNCHECKED:
-		KillTimer(5);
+		//KillTimer(5);
 		//KillTimer(4);
+		delete dwdlg;
 		cancelPutStonesThread();
 		//g_Ripple->cancelTimer();
 		restoresWallpaper();
@@ -972,13 +986,20 @@ void CDynamicWallpaperDlg::OnBnClickedWaves()
 }
 
 void CDynamicWallpaperDlg::setPutStonesThread() {
-	putStonesStatus = true;
-	putStonesHandle = CreateThread(NULL, 0, GetCursorDowncharWindowTitle, videodata, 0, NULL);
+	cursorThreadStatus = true;		//鼠标位置信息线程状态		false为不执行
+	clikThreadStatus = true;			//水波纹点击线程状态
+	slidingThreadStatus = true;		//滑动水波线程状态
+	videodata->cr->startTimer();
+	CreateThread(NULL, 0, GetCursorDowncharWindowTitle, NULL, 0, NULL);
+	CreateThread(NULL, 0, CursorMovePutStones, NULL, 0, 0);
+	CreateThread(NULL, 0, ClickPutStones, NULL, 0, 0);
 }
 
 void CDynamicWallpaperDlg::cancelPutStonesThread() {
 	//TerminateThread(putStonesHandle, 0);
-	putStonesStatus = false;
+	cursorThreadStatus = false;		//鼠标信息状态		false为不执行
+	clikThreadStatus = false;			//水波纹点击线程状态
+	slidingThreadStatus = false;		//滑动水波线程状态
 	g_Ripple->cancelTimer();
 }
 
@@ -1053,7 +1074,9 @@ DWORD CDynamicWallpaperDlg::autoNextPlay(LPVOID lpParameter)
 			string loopPath = judgeFile(tempSzfilePath);
 			ifstream LYJFilePath(loopPath);
 			if (LYJFilePath) {
-				videodata->vp->loadPlayer((char*)loopPath.c_str());
+				char* waitDelete = EncodeToUTF8((char*)loopPath.c_str());
+				videodata->vp->loadPlayer(waitDelete);
+				free(waitDelete);
 				videodata->vp->set_position(0.05);
 			}
 		}
@@ -1067,7 +1090,6 @@ DWORD CDynamicWallpaperDlg::autoNextPlay(LPVOID lpParameter)
 
 DWORD CDynamicWallpaperDlg::GetCursorDowncharWindowTitle(LPVOID lpParameter)
 {
-	CreateThread(NULL, 0, CursorMovePutStones, NULL, 0, 0);
 	while (1) {
 		Sleep(getCursorTimerInterval);
 		GetCursorPos(&mousePosition); // 获取鼠标当前位置
@@ -1082,24 +1104,16 @@ DWORD CDynamicWallpaperDlg::GetCursorDowncharWindowTitle(LPVOID lpParameter)
 DWORD CDynamicWallpaperDlg::CursorMovePutStones(LPVOID lpParameter)
 {
 	CPoint tempMousePosition;
-
-	videodata->cr->startTimer();
-
-	CreateThread(NULL, 0, ClickPutStones, NULL, 0, 0);
-	cursorThreadStatus = true;
 	while (1) {
 		Sleep(overallSlidingFrequency);
 		if ((strcmp(WindowTitle, "FolderView") == 0) && tempMousePosition != mousePosition) {
 			tempMousePosition = mousePosition;
 			videodata->cr->DropStone(mousePosition.x, mousePosition.y, 2, overallSlidingStrength);
 		}
-		if (!putStonesStatus) {
-			cursorThreadStatus = false;
+		if (!slidingThreadStatus) {
 			break;
 		}
 	}
-	videodata->cr->cancelTimer();
-	//delete tempPutstonesdate;
 	return 0;
 }
 
@@ -1137,10 +1151,10 @@ DWORD CDynamicWallpaperDlg::ClickPutStones(LPVOID lpParameter)
 
 	while (1) {
 		Sleep(overallClickFrequency);
-		if ((strcmp(WindowTitle, "FolderView") == 0) && GetAsyncKeyState(1) & 0x8000 || GetAsyncKeyState(2) & 0x8000) {
+		if ((strcmp(WindowTitle, "FolderView") == 0) && (GetKeyState(1) & 0x8000 || GetAsyncKeyState(2) & 0x8000)) {
 			videodata->cr->DropStone(mousePosition.x, mousePosition.y, 2, overallClickStrength);
 		}
-		if (!cursorThreadStatus) {
+		if (!clikThreadStatus) {
 			break;
 		}
 	}
@@ -1149,7 +1163,31 @@ DWORD CDynamicWallpaperDlg::ClickPutStones(LPVOID lpParameter)
 }
 
 
+DWORD CDynamicWallpaperDlg::CheckSystemWallpaper(LPVOID lpParameter)
+{
+	struct DWDlg {
+		CDynamicWallpaperDlg* dw;
+		CRipple* cp;
+		CRipple** CP;
+	};
+	DWDlg* dwdlg = (DWDlg*)lpParameter;
+	while (1) {
+		Sleep(300);
+		if (wallpaperSize != dwdlg->dw->wallpaperFileByte()) {
+			dwdlg->dw->cancelPutStonesThread();
+			wallpaperSize = dwdlg->dw->wallpaperFileByte();
 
+			dwdlg->dw->DynamicBackground.Destroy();
+			dwdlg->dw->DynamicBackground.Load(char_CString((char*)dwdlg->dw->buffWallpaperFilePath.c_str()));
+
+			dwdlg->dw->buffImg = &dwdlg->dw->DynamicBackground;
+			dwdlg->dw->hBmpRipple = (HBITMAP)dwdlg->dw->buffImg->operator HBITMAP();
+			dwdlg->cp->InitRipple(dwdlg->dw->GetSafeHwnd(), dwdlg->dw->hBmpRipple, 20);
+			dwdlg->dw->setPutStonesThread();
+		}
+	}
+	return 0;
+}
 
 
 DWORD CDynamicWallpaperDlg::loopPlayback(LPVOID lpParameter)
@@ -1174,14 +1212,13 @@ DWORD CDynamicWallpaperDlg::loopPlayback(LPVOID lpParameter)
 			break;
 		}
 	}
-	//delete tempdate;
 	return 0;
 }
 
 
-//void CDynamicWallpaperDlg::OnNMCustomdrawvolume(NMHDR* pNMHDR, LRESULT* pResult)
-//{
-//	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
-//	// TODO: 在此添加控件通知处理程序代码
-//	*pResult = 0;
-//}
+void CDynamicWallpaperDlg::OnBnClickedStopvideo()
+{
+	cancelLoop();
+	videoPlayer->releasePlayer();
+	restoresWallpaper();
+}

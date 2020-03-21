@@ -11,6 +11,8 @@
 #define IDB_RIPPLE1                     134
 #define IDC_FILEPath                    1002
 #define IDC_SelectFile                  1005
+#define IDC_SelectFile2                 1006
+#define IDC_StopVideo                   1006
 #define IDC_showVolume                  1008
 #define IDC_showVolume2                 1009
 #define IDC_showSliding                 1009

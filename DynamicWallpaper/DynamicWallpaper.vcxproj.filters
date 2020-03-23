@@ -30,9 +30,6 @@
     <ClInclude Include="CRipple.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="CUDA.cuh">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="DynamicWallpaper.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -77,10 +74,5 @@
     <Image Include="res\DynamicWallpaper.ico">
       <Filter>资源文件</Filter>
     </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="CUDA.cu">
-      <Filter>源文件</Filter>
-    </CudaCompile>
   </ItemGroup>
 </Project>

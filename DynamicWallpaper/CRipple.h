@@ -1,6 +1,5 @@
 #ifndef __CRIPPLE_H__
 #define __CRIPPLE_H__
-#include "CUDA.cuh"
 #include <Windows.h>
 /**
  *水波特效类

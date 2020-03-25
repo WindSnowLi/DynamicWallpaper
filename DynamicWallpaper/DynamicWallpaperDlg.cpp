@@ -183,6 +183,8 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	a.Format(_T("%d"), 10);
 	GetDlgItem(IDC_showClickFrequency)->SetWindowTextW(a);
 
+	//生成右下角托盘图标
+	SetTimer(2, 10, NULL);
 
 	HWND hwnd_progman = ::FindWindow(L"Progman", NULL);
 	if (hwnd_progman == NULL) {
@@ -206,35 +208,6 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	videodata->vp = videoPlayer;
 	videodata->cr = g_Ripple;
 	videodata->ci = &DynamicBackground;
-	/*
-	if (mOldBackgroud.IsNull()) {
-		HDC hDC = ::GetWindowDC(workerw);
-		int nBitPerPixel = GetDeviceCaps(hDC, BITSPIXEL);
-		int nWidth = GetDeviceCaps(hDC, HORZRES);
-		int nHeight = GetDeviceCaps(hDC, VERTRES);
-
-		mOldBackgroud.Create(nWidth, nHeight, nBitPerPixel);
-		BitBlt(mOldBackgroud.GetDC(), 0, 0, nWidth, nHeight, hDC, 0, 0, SRCCOPY);
-		mOldBackgroud.ReleaseDC();
-	}
-	*/
-	/*
-	CImage* img;
-
-	CBitmap* bm;
-
-	img=&mOldBackgroud;
-
-	HBITMAP hbmp = (HBITMAP)img->operator HBITMAP();
-
-
-	//CBitmap   bitmap;                            //定义位图
-	//bitmap.LoadBitmap(IDB_RIPPLE1);           //这个IDB_BITMAP1要自己添加
-	//hBmpRipple = bitmap;
-	hBmpRipple = hbmp;
-	g_Ripple.InitRipple(GetSafeHwnd(), hBmpRipple, 30);
-
-	*/
 
 	if (IsAutoBoot()) {
 		((CButton*)GetDlgItem(IDC_autoStartStatus))->SetCheck(1);
@@ -264,13 +237,14 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 				char* waitDelete = EncodeToUTF8((char*)fileBuff.c_str());
 				videoPlayer->loadPlayer(waitDelete);
 				GetDlgItem(IDC_FILEPath)->SetWindowTextW(char_CString((char*)fileBuff.c_str()));
-				SetTimer(2, 10, NULL);
+				this->ShowWindow(SC_MINIMIZE); //若开机自动播放成功，则自动隐藏窗口图标
 				setLoop();
 			}
 			
 		}
 		delete tempSzfilePath;
 	}
+
 
 	((CButton*)GetDlgItem(IDC_loopPlayer))->SetCheck(1);
 	
@@ -364,8 +338,10 @@ void CDynamicWallpaperDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	{
 		CDialogEx::OnSysCommand(nID, lParam);
 	}
-	if (nID == SC_MINIMIZE)
+	if (nID == SC_MINIMIZE) {
 		toTray(); //最小化到托盘的函数
+		this->ShowWindow(SW_HIDE);
+	}
 }
 // 如果向对话框添加最小化按钮，则需要下面的代码
 //  来绘制该图标。  对于使用文档/视图模型的 MFC 应用程序，
@@ -431,8 +407,7 @@ string CDynamicWallpaperDlg::pathConvert(char* ch) {
 		if (temp[i] == '\\') {
 			s = s + "\\\\";
 		}
-		else
-		{
+		else{
 			s = s + temp[i];
 		}
 	}
@@ -514,66 +489,10 @@ void CDynamicWallpaperDlg::OnTimer(UINT_PTR nIDEvent)
 	float temp;
 	switch (nIDEvent) {
 	case 1:
-		//temp = videoPlayer->get_position();
-		//if (temp >= 0.9) {
-		//	videoPlayer->set_position(0.1);
-		//}
 		break;
 	case 2:
-		this->ShowWindow(SC_MINIMIZE);
 		toTray();
 		KillTimer(2);
-		break;
-	case 3:
-		//if (videoPlayer->get_position()>=0.9) {
-		//	TCHAR szfilePath[MAX_PATH + 1];
-		//	GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
-		//	PathRemoveFileSpec(szfilePath);//得到应用程序路径
-		//	PathAppend(szfilePath, _T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
-		//	string loopPath = judgeFile(CString_char(szfilePath));
-		//	ifstream test(loopPath);
-		//	if (test) {
-		//		videoPlayer->loadPlayer((char*)loopPath.c_str());
-		//		videoPlayer->set_position(0.05);
-		//	}
-		//}
-		break;
-	case 4:
-		/*GetCursorPos(&pt);
-		cx = pt.x;
-		cy = pt.y;
-		g_Ripple->DropStone(cx, cy, 2, 256);*/
-		break;
-	case 5:
-		/*
-		if (wallpaperSize != wallpaperFileByte()) {
-			wallpaperSize = wallpaperFileByte();
-			//KillTimer(4);
-			cancelPutStonesThread();
-			//g_Ripple->cancelTimer();
-			*/
-			//HDC hDC = ::GetWindowDC(workerw);
-			//int nBitPerPixel = GetDeviceCaps(hDC, BITSPIXEL);
-			//int nWidth = GetDeviceCaps(hDC, HORZRES);
-			//int nHeight = GetDeviceCaps(hDC, VERTRES);
-			//DynamicBackground.Destroy();
-			//DynamicBackground.Create(nWidth, nHeight, nBitPerPixel);
-			//BitBlt(DynamicBackground.GetDC(), 0, 0, nWidth, nHeight, hDC, 0, 0, SRCCOPY);
-			//DynamicBackground.ReleaseDC();
-		/*
-			DynamicBackground.Destroy();
-			DynamicBackground.Load(char_CString((char*)buffWallpaperFilePath.c_str()));
-			//g_Ripple->FreeRipple();
-
-			buffImg = &DynamicBackground;
-			hBmpRipple = (HBITMAP)buffImg->operator HBITMAP();
-
-
-			g_Ripple->InitRipple(GetSafeHwnd(), hBmpRipple, 30);
-			g_Ripple->startTimer();
-			//SetTimer(4, 100, NULL);
-			setPutStonesThread();
-		}*/
 		break;
 	}
 	CDialogEx::OnTimer(nIDEvent);
@@ -631,7 +550,7 @@ void CDynamicWallpaperDlg::toTray()
 	
 	nid.cbSize = sizeof(NOTIFYICONDATA);
 	Shell_NotifyIcon(NIM_ADD, &nid); //在托盘区添加图标
-	this->ShowWindow(SW_HIDE); //隐藏主窗口
+	//this->ShowWindow(SW_HIDE); //隐藏主窗口
 }
 LRESULT CDynamicWallpaperDlg::OnShowTask(WPARAM wParam, LPARAM lParam)
 {
@@ -649,14 +568,19 @@ LRESULT CDynamicWallpaperDlg::OnShowTask(WPARAM wParam, LPARAM lParam)
 	} break;
 	case WM_LBUTTONDOWN: //左键的处理
 	{
-		this->ShowWindow(SW_SHOW);//简单的显示主窗口完事儿
-		DeleteTray();
+		if (IsWindowVisible()) {
+			this->ShowWindow(SW_HIDE);//简单的显示主窗口完事儿
+		}
+		else {
+			this->ShowWindow(SW_SHOW);
+			::SendMessage(AfxGetMainWnd()->m_hWnd,WM_SYSCOMMAND, SC_RESTORE, NULL);
+		}
+		//DeleteTray();
 	} break;
 	default: break;
 	}
 	return 0;
 }
-
 void CDynamicWallpaperDlg::DeleteTray()
 {
 	NOTIFYICONDATA nid;
@@ -671,7 +595,6 @@ void CDynamicWallpaperDlg::DeleteTray()
 	Shell_NotifyIcon(NIM_DELETE, &nid); //在托盘区删除图标
 }
 
-
 void CDynamicWallpaperDlg::OnExitRmenu()
 {
 	// TODO: 在此添加命令处理程序代码
@@ -682,17 +605,6 @@ void CDynamicWallpaperDlg::OnExitRmenu()
 
 void CDynamicWallpaperDlg::OnClose()
 {
-	// TODO: 在此添加消息处理程序代码和/或调用默认值
-	/*
-	if (!mOldBackgroud.IsNull()) {
-		HDC hDC = ::GetWindowDC(workerw);
-		::SetStretchBltMode(hDC, COLORONCOLOR);
-
-		CRect rect;
-		::GetWindowRect(workerw, &rect);
-		mOldBackgroud.Draw(hDC, rect);
-	}
-	*/
 	HDC hDC = ::GetWindowDC(workerw);
 	::SetStretchBltMode(hDC, COLORONCOLOR);
 
@@ -815,7 +727,7 @@ BOOL CDynamicWallpaperDlg::AutoBootSet()
 		RegCloseKey(hKey);
 		/*
 		
-		因为本人电脑注册表Run路径有时无法写入标准的路径，所以在这用的在Run“标记”的方式，实际自启信息在RunOnce，
+		电脑注册表Run路径有时无法写入标准的路径，所以在这用的在Run“标记”的方式，实际自启信息在RunOnce，
 		每次启动检查“标记”，如果存在，再次写入RunOnce
 		
 		*/
@@ -874,13 +786,6 @@ void CAboutDlg::OnBnClickedOk()
 
 void CDynamicWallpaperDlg::PostNcDestroy()
 {
-	//if (!mOldBackgroud.IsNull()) {
-	//	HDC hDC = ::GetWindowDC(workerw);
-	//	::SetStretchBltMode(hDC, COLORONCOLOR);
-	//	CRect rect;
-	//	::GetWindowRect(workerw, &rect);
-	//	mOldBackgroud.Draw(hDC, rect);
-	//}
 	cancelPutStonesThread();
 	delete g_Ripple;
 	restoresWallpaper();
@@ -924,18 +829,15 @@ void CDynamicWallpaperDlg::cancelLoop() {
 }
 void CDynamicWallpaperDlg::OnBnClickedloopplayer()
 {
-	// TODO: 在此添加控件通知处理程序代码
 	switch (this->IsDlgButtonChecked(IDC_loopPlayer))
 	{
 	case BST_CHECKED:
-		//KillTimer(3);
 		cancelAutoNextPlayThread();
 		setLoop();
 		break;
 	case BST_UNCHECKED:
 		//TerminateThread(cycleHandle, 0);
 		cancelLoop();
-		//SetTimer(3, 100, NULL);
 		setAutoNextPlayThread();
 		break;
 	}
@@ -961,28 +863,19 @@ void CDynamicWallpaperDlg::OnBnClickedWaves()
 	switch (this->IsDlgButtonChecked(IDC_Waves))
 	{
 	case BST_CHECKED:
-		//SetTimer(5, 3000, NULL);
-
 		dwdlg->dw = this;
 		dwdlg->cp = g_Ripple;
 		dwdlg->CP = &g_Ripple;
 		setPutStonesThread();
 		CreateThread(NULL, 0, CheckSystemWallpaper, dwdlg, 0, 0);
-		//SetTimer(4, 100, NULL);
-		//putstonesdate->cr = g_Ripple;
-		//g_Ripple->startTimer();
 		break;
 	case BST_UNCHECKED:
-		//KillTimer(5);
-		//KillTimer(4);
 		delete dwdlg;
 		cancelPutStonesThread();
-		//g_Ripple->cancelTimer();
 		restoresWallpaper();
 		break;
 	}
 	
-	// TODO: 在此添加控件通知处理程序代码
 }
 
 void CDynamicWallpaperDlg::setPutStonesThread() {
@@ -1052,14 +945,6 @@ long CDynamicWallpaperDlg::wallpaperFileByte() {
 	return tempWallpaperSize;
 }
 
-
-
-//void CDynamicWallpaperDlg::OnLButtonDown(UINT nFlags, CPoint point)
-//{
-//	// TODO: 在此添加消息处理程序代码和/或调用默认值
-//	g_Ripple->DropStone(point.x, point.y, 2, 2000);
-//	CDialogEx::OnLButtonDown(nFlags, point);
-//}
 DWORD CDynamicWallpaperDlg::autoNextPlay(LPVOID lpParameter)
 {
 	TCHAR szfilePath[MAX_PATH + 1];
@@ -1194,14 +1079,6 @@ DWORD CDynamicWallpaperDlg::loopPlayback(LPVOID lpParameter)
 {
 	float temp;
 	Sleep(2700);
-	/*
-	Sleep(2700);
-	int vedioLength = date->vp->get_length();
-	int sleeptime = vedioLength / 11;
-	if (sleeptime==0) {
-		sleeptime = 300;
-	}
-	*/
 	while (1) {
 		Sleep(300);
 		temp = videodata->vp->get_position();

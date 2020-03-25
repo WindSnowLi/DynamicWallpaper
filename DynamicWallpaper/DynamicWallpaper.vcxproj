@@ -199,7 +199,6 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CRipple.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="DynamicWallpaper.h" />
     <ClInclude Include="DynamicWallpaperDlg.h" />
@@ -209,7 +208,6 @@
     <ClInclude Include="VideoPlayer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CRipple.cpp" />
     <ClCompile Include="DynamicWallpaper.cpp" />
     <ClCompile Include="DynamicWallpaperDlg.cpp" />
     <ClCompile Include="pch.cpp">

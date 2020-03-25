@@ -19,6 +19,8 @@
 using namespace std;
 #pragma comment(lib, "libvlc.lib")
 #pragma comment(lib, "libvlccore.lib")
+#pragma comment(lib, "CRIPPLE.lib")
+
 #pragma once
 
 

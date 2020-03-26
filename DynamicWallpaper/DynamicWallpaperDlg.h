@@ -41,8 +41,6 @@ public:
 // 实现
 protected:
 	HICON m_hIcon;
-
-	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
 	static bool judgeVedioFile(char* temp);
 	static string judgeFile(char* temp);
@@ -63,42 +61,50 @@ private:
 	CImage DynamicBackground;
 	CBitmap* buffBitmap;
 	CImage* buffImg;
-	HBITMAP hBmpRipple;				//水波背景图句柄
-	int cx, cy;						//点击x，y坐标
-	string buffWallpaperFilePath;		//系统当前壁纸路径
-	TCHAR szfilePath[MAX_PATH + 1];  //程序所在路径
-	HANDLE cycleHandle;                 //循环播放线程句柄
-	HANDLE putStonesHandle;				//水波线程句柄
-	HANDLE autoNextPlayHandle;			//自动播放下一个句柄
+	//水波背景图句柄
+	HBITMAP hBmpRipple;				
+	//点击x，y坐标
+	int cx, cy;						
+	//系统当前壁纸路径
+	string buffWallpaperFilePath;		
+	//程序所在路径
+	TCHAR szfilePath[MAX_PATH + 1];  
+	 //循环播放线程句柄
+	HANDLE cycleHandle;               
+	//水波线程句柄
+	HANDLE putStonesHandle;				
+	//自动播放下一个句柄
+	HANDLE autoNextPlayHandle;			
 
 	CRipple* g_Ripple = new CRipple();
 	VideoPlayer* videoPlayer = new VideoPlayer();
 
 public:
-	static DWORD WINAPI  loopPlayback(          //循环播放线程
-		LPVOID lpParameter   // thread data
+	//循环播放线程
+	static DWORD WINAPI  loopPlayback(          
+		LPVOID lpParameter   
+	);
+	//自动下一个线程
+	static DWORD WINAPI autoNextPlay(			
+		LPVOID lpParameter   
 	);
 
-	static DWORD WINAPI autoNextPlay(			//自动下一个线程
-		LPVOID lpParameter   // thread data
-	);
 
-
-	//水波纹线程
-	static DWORD WINAPI GetCursorDowncharWindowTitle(			//获得鼠标位置和鼠标下的窗口标题
-		LPVOID lpParameter   // thread data
+	//获得鼠标位置和鼠标下的窗口标题
+	static DWORD WINAPI GetCursorDowncharWindowTitle(			
+		LPVOID lpParameter   
 	);
-	//水波纹线程
-	static DWORD WINAPI CursorMovePutStones(			//鼠标移动水波纹线程
-		LPVOID lpParameter   // thread data
+	//鼠标移动水波纹线程
+	static DWORD WINAPI CursorMovePutStones(			
+		LPVOID lpParameter   
 	);
-	//水波纹线程
-	static DWORD WINAPI ClickPutStones(				//点击水波纹线程
-		LPVOID lpParameter   // thread data
+	//点击水波纹线程
+	static DWORD WINAPI ClickPutStones(				
+		LPVOID lpParameter  
 	);
-
-	static DWORD WINAPI CheckSystemWallpaper(				//点击水波纹线程
-		LPVOID lpParameter   // thread data
+	//检查系统壁纸是否变化
+	static DWORD WINAPI CheckSystemWallpaper(				
+		LPVOID lpParameter   
 	);
 
 	static char* CString_char(CString str);
@@ -110,9 +116,12 @@ public:
 	void setPutStonesThread();
 	void cancelPutStonesThread();
 	void GetAllFiles(string path, vector<string>& wallpaperFilesName);
+	//获得系统壁纸大小
 	long wallpaperFileByte();
-	void toTray();//最小化到托盘
-	void DeleteTray();//删除托盘图标
+	//最小化到托盘
+	void toTray();
+	//删除托盘图标
+	void DeleteTray();
 	void setTransparent(float transparent);
 	TCHAR* char2TCAHR(char* str);
 	BOOL IsAutoBoot();

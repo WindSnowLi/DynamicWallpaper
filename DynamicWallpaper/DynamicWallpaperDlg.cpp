@@ -237,7 +237,7 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 				char* waitDelete = EncodeToUTF8((char*)fileBuff.c_str());
 				videoPlayer->loadPlayer(waitDelete);
 				GetDlgItem(IDC_FILEPath)->SetWindowTextW(char_CString((char*)fileBuff.c_str()));
-				this->ShowWindow(SC_MINIMIZE); //若开机自动播放成功，则自动隐藏窗口图标
+				SetTimer(1, 10, NULL); //若开机自动播放成功，则自动隐藏窗口
 				setLoop();
 			}
 
@@ -245,20 +245,16 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 		delete tempSzfilePath;
 	}
 
-
+	//循环播放设为选中	
 	((CButton*)GetDlgItem(IDC_loopPlayer))->SetCheck(1);
 
+	//获取系统壁纸大小
 	wallpaperSize = wallpaperFileByte();
+	//加载系统壁纸
 	DynamicBackground.Load(char_CString((char*)pathConvert((char*)buffWallpaperFilePath.c_str()).c_str()));
 
-	PathRemoveFileSpec(szfilePath);//得到应用程序路径
-	PathAppend(szfilePath, _T("Spare.jpg"));//添加文件名构造出绝对路径
-	if (DynamicBackground.IsNull()) {
-		DynamicBackground.Load(szfilePath);
-	}
-
 	buffImg = &DynamicBackground;
-
+	//转化系统壁纸格式并传给水波纹对象
 	HBITMAP hbmp = (HBITMAP)buffImg->operator HBITMAP();
 	g_Ripple->InitRipple(GetSafeHwnd(), hbmp, 20);
 
@@ -489,6 +485,8 @@ void CDynamicWallpaperDlg::OnTimer(UINT_PTR nIDEvent)
 	float temp;
 	switch (nIDEvent) {
 	case 1:
+		this->ShowWindow(SW_HIDE); //隐藏窗口
+		KillTimer(1);
 		break;
 	case 2:
 		toTray();

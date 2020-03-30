@@ -106,7 +106,15 @@ public:
 	static DWORD WINAPI CheckSystemWallpaper(				
 		LPVOID lpParameter   
 	);
+	//获取服务状态
+	static DWORD WINAPI WinExecAndWait32(
+		LPVOID lpParameter
+	);
 
+	//根据服务状态设置对应复选框
+	static DWORD WINAPI SetServiceCheckBoxStatus(
+		LPVOID lpParameter
+	);
 	static char* CString_char(CString str);
 	static string pathConvert(char* ch);
 	static CString char_CString(char* ch);
@@ -152,4 +160,7 @@ public:
 	CSliderCtrl slidingStrength;
 	CSliderCtrl clickStrength;
 	afx_msg void OnBnClickedStopvideo();
+	afx_msg void OnBnClickedMysqlservice();
+	afx_msg void OnBnClickedGitblitservice();
+	afx_msg void OnBnClickedCheckservice();
 };

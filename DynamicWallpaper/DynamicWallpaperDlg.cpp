@@ -139,6 +139,9 @@ BEGIN_MESSAGE_MAP(CDynamicWallpaperDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_Waves, &CDynamicWallpaperDlg::OnBnClickedWaves)
 	ON_WM_LBUTTONDOWN()
 	ON_BN_CLICKED(IDC_StopVideo, &CDynamicWallpaperDlg::OnBnClickedStopvideo)
+	ON_BN_CLICKED(IDC_MysqlService, &CDynamicWallpaperDlg::OnBnClickedMysqlservice)
+	ON_BN_CLICKED(IDC_GitblitService, &CDynamicWallpaperDlg::OnBnClickedGitblitservice)
+	ON_BN_CLICKED(IDC_CheckService, &CDynamicWallpaperDlg::OnBnClickedCheckservice)
 END_MESSAGE_MAP()
 
 
@@ -258,6 +261,11 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	HBITMAP hbmp = (HBITMAP)buffImg->operator HBITMAP();
 	g_Ripple->InitRipple(GetSafeHwnd(), hbmp, 20);
 
+
+	//检查服务
+	CDynamicWallpaperDlg::OnBnClickedCheckservice();
+
+
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
@@ -284,6 +292,8 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
+
+
 
 bool CDynamicWallpaperDlg::judgeVedioFile(char* temp) {
 	ifstream file(temp);
@@ -1096,4 +1106,185 @@ void CDynamicWallpaperDlg::OnBnClickedStopvideo()
 	cancelLoop();
 	videoPlayer->releasePlayer();
 	restoresWallpaper();
+}
+
+
+void CDynamicWallpaperDlg::OnBnClickedMysqlservice()
+{
+	struct ServiceParameters {
+		LPCTSTR lpszAppPath;   // 执行程序的文件名
+		LPCTSTR lpParameters;  // 参数
+		LPCTSTR lpszDirectory; // 执行环境目录
+		DWORD dwMilliseconds;	//等待时长
+		int*  returnValue;
+	};
+	ServiceParameters* sp = new ServiceParameters();
+	int returnValue=0;
+	TCHAR szfilePath[MAX_PATH + 1];
+	GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
+	PathRemoveFileSpec(szfilePath);//得到应用程序路径
+
+	sp->dwMilliseconds = 8000;
+	sp->lpszDirectory = szfilePath;
+	sp->lpszAppPath = _T("Service.exe");
+	sp->returnValue = &returnValue;
+	switch (this->IsDlgButtonChecked(IDC_MysqlService))
+	{
+	case BST_CHECKED:
+		sp->lpParameters = _T("设 Mysql 1");
+		CreateThread(NULL, 0, WinExecAndWait32, sp, 0, 0);
+		break;
+	case BST_UNCHECKED:
+		sp->lpParameters = _T("设 Mysql 0");
+		CreateThread(NULL, 0, WinExecAndWait32, sp, 0, 0);
+		break;
+	}
+}
+
+
+void CDynamicWallpaperDlg::OnBnClickedGitblitservice()
+{
+	struct ServiceParameters {
+		LPCTSTR lpszAppPath;   // 执行程序的文件名
+		LPCTSTR lpParameters;  // 参数
+		LPCTSTR lpszDirectory; // 执行环境目录
+		DWORD dwMilliseconds;	//等待时长
+	};
+	ServiceParameters* sp = new ServiceParameters();
+	TCHAR szfilePath[MAX_PATH + 1];
+	GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
+	PathRemoveFileSpec(szfilePath);//得到应用程序路径
+
+	sp->dwMilliseconds = 8000;
+	sp->lpszDirectory = szfilePath;
+	sp->lpszAppPath = _T("Service.exe");
+	switch (this->IsDlgButtonChecked(IDC_MysqlService))
+	{
+	case BST_CHECKED:
+		sp->lpParameters = _T("设 gitblit 1");
+		CreateThread(NULL, 0, WinExecAndWait32, sp, 0, 0);
+		break;
+	case BST_UNCHECKED:
+		sp->lpParameters = _T("设 gitblit 0");
+		CreateThread(NULL, 0, WinExecAndWait32, sp, 0, 0);
+		break;
+	}
+}
+
+
+DWORD  CDynamicWallpaperDlg::WinExecAndWait32(LPVOID lpParameter)
+{
+	struct ServiceParameters {
+		LPCTSTR lpszAppPath;   // 执行程序的文件名
+		LPCTSTR lpParameters;  // 参数
+		LPCTSTR lpszDirectory; // 执行环境目录
+		DWORD dwMilliseconds;	//等待时长
+		int* returnValue;
+	};
+	ServiceParameters* sp = (ServiceParameters*)lpParameter;
+	LPCTSTR lpszAppPath = sp->lpszAppPath;
+	LPCTSTR lpParameters = sp->lpParameters;
+	LPCTSTR lpszDirectory = sp->lpszDirectory;
+	DWORD dwMilliseconds = sp->dwMilliseconds;
+	int* returnValue = sp->returnValue;
+	delete sp;
+	SHELLEXECUTEINFO ShExecInfo = { 0 };
+	ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+	ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+	ShExecInfo.hwnd = NULL;
+	ShExecInfo.lpVerb = NULL;
+	ShExecInfo.lpFile = lpszAppPath;
+	ShExecInfo.lpParameters = lpParameters;
+	ShExecInfo.lpDirectory = lpszDirectory;
+	ShExecInfo.nShow = SW_HIDE;
+	ShExecInfo.hInstApp = NULL;
+	ShellExecuteEx(&ShExecInfo);
+
+	// 指定时间没结束
+	/*
+	if (WaitForSingleObject(ShExecInfo.hProcess, dwMilliseconds) == WAIT_TIMEOUT)
+	{    // 强行杀死进程
+		TerminateProcess(ShExecInfo.hProcess, 0);
+		return 0;    //强行终止
+	}
+	*/
+	Sleep(dwMilliseconds);
+	DWORD dwExitCode = 0;
+	BOOL bOK = GetExitCodeProcess(ShExecInfo.hProcess, &dwExitCode);
+	ASSERT(bOK);
+	*returnValue = dwExitCode;
+	return 0;
+}
+
+
+DWORD  CDynamicWallpaperDlg::SetServiceCheckBoxStatus(LPVOID lpParameter)
+{
+	Sleep(1500);
+	struct ServiceCheckBoxParameters {
+		CWnd* mysqlCheckBox;
+		CWnd* gitblitCheckBox;
+		int* mysqlReturnValue;
+		int* gitblitReturnValue;
+	};
+
+	ServiceCheckBoxParameters* scbp = (ServiceCheckBoxParameters*)lpParameter;
+	if (*(scbp->mysqlReturnValue) == 2 || *(scbp->mysqlReturnValue) == 3) {
+		((CButton*)scbp->mysqlCheckBox)->SetCheck(1);
+	}
+	if (*(scbp->gitblitReturnValue) == 2 || *(scbp->gitblitReturnValue) == 3) {
+		((CButton*)scbp->gitblitCheckBox)->SetCheck(1);
+	}
+	delete scbp->mysqlReturnValue;
+	delete scbp->gitblitReturnValue;
+	delete scbp;
+	return 0;
+}
+
+
+void CDynamicWallpaperDlg::OnBnClickedCheckservice()
+{
+
+	int mysqlerviceStatus = 0;
+	struct ServiceParameters {
+		LPCTSTR lpszAppPath;   // 执行程序的文件名
+		LPCTSTR lpParameters;  // 参数
+		LPCTSTR lpszDirectory; // 执行环境目录
+		DWORD dwMilliseconds;	//等待时长
+		int* returnValue;
+	};
+	ServiceParameters* mysqlsp = new ServiceParameters();
+	int* mysqlReturnValue = new int();
+	TCHAR szfilePath[MAX_PATH + 1];
+	GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
+	PathRemoveFileSpec(szfilePath);//得到应用程序路径
+
+	mysqlsp->dwMilliseconds = 1000;
+	mysqlsp->lpszDirectory = szfilePath;
+	mysqlsp->lpszAppPath = _T("Service.exe");
+	mysqlsp->lpParameters = _T("查 Mysql");
+	mysqlsp->returnValue = mysqlReturnValue;
+	CreateThread(NULL, 0, WinExecAndWait32, mysqlsp, 0, 0);
+
+	int* gitblitReturnValue = new int();
+	ServiceParameters* gitblitsp = new ServiceParameters();
+	gitblitsp->dwMilliseconds = 1000;
+	gitblitsp->lpszDirectory = szfilePath;
+	gitblitsp->lpszAppPath = _T("Service.exe");
+	gitblitsp->returnValue = gitblitReturnValue;
+	gitblitsp->lpParameters = _T("查 gitblit");
+	CreateThread(NULL, 0, WinExecAndWait32, gitblitsp, 0, 0);
+
+	struct ServiceCheckBoxParameters {
+		CWnd* mysqlCheckBox;
+		CWnd* gitblitCheckBox;
+		int* mysqlReturnValue;
+		int* gitblitReturnValue;
+	};
+
+	ServiceCheckBoxParameters* scbp = new ServiceCheckBoxParameters();
+	scbp->gitblitCheckBox = GetDlgItem(IDC_GitblitService);
+	scbp->mysqlCheckBox = GetDlgItem(IDC_MysqlService);
+	scbp->mysqlReturnValue = mysqlReturnValue;
+	scbp->gitblitReturnValue = gitblitReturnValue;
+	CreateThread(NULL, 0, SetServiceCheckBoxStatus, scbp, 0, 0);
 }

@@ -26,12 +26,16 @@
 #define IDC_autoStartStatus             1015
 #define IDC_CHECK1                      1017
 #define IDC_loopPlayer                  1017
+#define IDC_MysqlService                1018
+#define IDC_GitblitService              1019
 #define IDC_Waves                       1020
 #define IDC_SlidingStrength             1022
 #define IDC_ClickStrength               1023
 #define IDC_SlidingFrequency            1024
 #define IDC_ClickStrength3              1025
 #define IDC_ClickFrequency              1026
+#define IDC_MFCBUTTON1                  1027
+#define IDC_CheckService                1027
 #define IDR_RBUTTON_EXIT                32773
 #define ID_EXIT_32774                   32774
 #define ID_EXIT_RMENU                   32775
@@ -44,7 +48,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        135
 #define _APS_NEXT_COMMAND_VALUE         32778
-#define _APS_NEXT_CONTROL_VALUE         1027
+#define _APS_NEXT_CONTROL_VALUE         1028
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

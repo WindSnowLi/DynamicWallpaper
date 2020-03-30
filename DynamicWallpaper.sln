@@ -5,6 +5,10 @@ VisualStudioVersion = 16.0.29728.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DynamicWallpaper", "DynamicWallpaper\DynamicWallpaper.vcxproj", "{5764304B-5A52-40DA-9DC4-DFD2DBD99635}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "壁纸", "壁纸\壁纸.vdproj", "{86DBD11C-42DA-4B98-AB59-6A8CFA5AB264}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Service", "Service\Service.vcxproj", "{C9E69B7A-AF3C-47DC-B4CD-7B966374504B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +25,19 @@ Global
 		{5764304B-5A52-40DA-9DC4-DFD2DBD99635}.Release|x64.Build.0 = Release|x64
 		{5764304B-5A52-40DA-9DC4-DFD2DBD99635}.Release|x86.ActiveCfg = Release|Win32
 		{5764304B-5A52-40DA-9DC4-DFD2DBD99635}.Release|x86.Build.0 = Release|Win32
+		{86DBD11C-42DA-4B98-AB59-6A8CFA5AB264}.Debug|x64.ActiveCfg = Debug
+		{86DBD11C-42DA-4B98-AB59-6A8CFA5AB264}.Debug|x86.ActiveCfg = Debug
+		{86DBD11C-42DA-4B98-AB59-6A8CFA5AB264}.Release|x64.ActiveCfg = Release
+		{86DBD11C-42DA-4B98-AB59-6A8CFA5AB264}.Release|x64.Build.0 = Release
+		{86DBD11C-42DA-4B98-AB59-6A8CFA5AB264}.Release|x86.ActiveCfg = Release
+		{C9E69B7A-AF3C-47DC-B4CD-7B966374504B}.Debug|x64.ActiveCfg = Debug|x64
+		{C9E69B7A-AF3C-47DC-B4CD-7B966374504B}.Debug|x64.Build.0 = Debug|x64
+		{C9E69B7A-AF3C-47DC-B4CD-7B966374504B}.Debug|x86.ActiveCfg = Debug|Win32
+		{C9E69B7A-AF3C-47DC-B4CD-7B966374504B}.Debug|x86.Build.0 = Debug|Win32
+		{C9E69B7A-AF3C-47DC-B4CD-7B966374504B}.Release|x64.ActiveCfg = Release|x64
+		{C9E69B7A-AF3C-47DC-B4CD-7B966374504B}.Release|x64.Build.0 = Release|x64
+		{C9E69B7A-AF3C-47DC-B4CD-7B966374504B}.Release|x86.ActiveCfg = Release|Win32
+		{C9E69B7A-AF3C-47DC-B4CD-7B966374504B}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

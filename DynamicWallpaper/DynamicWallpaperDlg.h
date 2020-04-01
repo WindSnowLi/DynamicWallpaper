@@ -1,11 +1,10 @@
 ﻿
 // DynamicWallpaperDlg.h: 头文件
 //
+#define ssize_t SSIZE_T
 
-#include <windows.h>
 #include <WinUser.h>
 #include <iostream>
-#define ssize_t SSIZE_T
 #include <vlc/vlc.h>
 #include <thread>
 #include <fstream>
@@ -14,9 +13,9 @@
 #include "CRipple.h"
 #include <io.h>
 #include <vector>
-
-
+#include <ServiceDLL.h>
 using namespace std;
+#pragma comment(lib, "SERVICEDLL.lib")
 #pragma comment(lib, "libvlc.lib")
 #pragma comment(lib, "libvlccore.lib")
 #pragma once
@@ -115,6 +114,12 @@ public:
 	static DWORD WINAPI SetServiceCheckBoxStatus(
 		LPVOID lpParameter
 	);
+
+	//设置服务状态
+	static DWORD WINAPI SetServiceStatus(
+		LPVOID lpParameter
+	);
+
 	static char* CString_char(CString str);
 	static string pathConvert(char* ch);
 	static CString char_CString(char* ch);

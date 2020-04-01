@@ -9,6 +9,8 @@ Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "壁纸", "壁纸\壁纸.vdp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Service", "Service\Service.vcxproj", "{C9E69B7A-AF3C-47DC-B4CD-7B966374504B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ServiceDLL", "ServiceDLL\ServiceDLL.vcxproj", "{AC404DD8-6ADA-49F8-AA43-62D024D02FEB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -38,6 +40,14 @@ Global
 		{C9E69B7A-AF3C-47DC-B4CD-7B966374504B}.Release|x64.Build.0 = Release|x64
 		{C9E69B7A-AF3C-47DC-B4CD-7B966374504B}.Release|x86.ActiveCfg = Release|Win32
 		{C9E69B7A-AF3C-47DC-B4CD-7B966374504B}.Release|x86.Build.0 = Release|Win32
+		{AC404DD8-6ADA-49F8-AA43-62D024D02FEB}.Debug|x64.ActiveCfg = Debug|x64
+		{AC404DD8-6ADA-49F8-AA43-62D024D02FEB}.Debug|x64.Build.0 = Debug|x64
+		{AC404DD8-6ADA-49F8-AA43-62D024D02FEB}.Debug|x86.ActiveCfg = Debug|Win32
+		{AC404DD8-6ADA-49F8-AA43-62D024D02FEB}.Debug|x86.Build.0 = Debug|Win32
+		{AC404DD8-6ADA-49F8-AA43-62D024D02FEB}.Release|x64.ActiveCfg = Release|x64
+		{AC404DD8-6ADA-49F8-AA43-62D024D02FEB}.Release|x64.Build.0 = Release|x64
+		{AC404DD8-6ADA-49F8-AA43-62D024D02FEB}.Release|x86.ActiveCfg = Release|Win32
+		{AC404DD8-6ADA-49F8-AA43-62D024D02FEB}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

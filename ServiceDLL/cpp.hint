@@ -1,0 +1,2 @@
+#define SERVICEDLL_API __declspec(dllexport)
+#define SERVICEDLL_API __declspec(dllimport)

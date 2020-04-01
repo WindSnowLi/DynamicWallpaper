@@ -90,7 +90,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>E:\LocalGitRepository\DynamicWallpaper\lib;E:\LocalGitRepository\DynamicWallpaper\include;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\LocalGitRepository\DynamicWallpaper\lib;E:\LocalGitRepository\DynamicWallpaper\include;$(LibraryPath)</LibraryPath>
+    <LibraryPath>E:\LocalGitRepository\DynamicWallpaper\include;E:\LocalGitRepository\DynamicWallpaper\lib;$(LibraryPath)</LibraryPath>
+    <ReferencePath>E:\LocalGitRepository\DynamicWallpaper\include;E:\LocalGitRepository\DynamicWallpaper\lib;$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -181,7 +182,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(CudaToolkitLibDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>E:\LocalGitRepository\DynamicWallpaper\lib;%(AdditionalLibraryDirectories);$(CudaToolkitLibDir)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
       <UACUIAccess>false</UACUIAccess>

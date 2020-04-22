@@ -7,7 +7,10 @@
 #include "DynamicWallpaper.h"
 #include "DynamicWallpaperDlg.h"
 #include "afxdialogex.h"
-
+#include <boost/archive/xml_iarchive.hpp>
+#include <boost/archive/xml_oarchive.hpp>
+#include <boost/serialization/list.hpp>
+#include <boost/serialization/vector.hpp>
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -229,24 +232,44 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 
 	if (startingmethod.Compare(szFilePathTemp))
 	{
-		PathRemoveFileSpec(szfilePath);//得到应用程序路径
-		PathAppend(szfilePath, _T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
-		char* tempSzfilePath = CString_char(szfilePath);
-		if (judgeVedioFile(tempSzfilePath))
-		{
-			string fileBuff;
-			fileBuff = judgeFile(tempSzfilePath);
-			if (judgeVedioFile((char*)fileBuff.c_str())) {
-				char* waitDelete = EncodeToUTF8((char*)fileBuff.c_str());
-				videoPlayer->loadPlayer(waitDelete);
-				GetDlgItem(IDC_FILEPath)->SetWindowTextW(char_CString((char*)fileBuff.c_str()));
-				SetTimer(1, 10, NULL); //若开机自动播放成功，则自动隐藏窗口
-				setLoop();
-			}
-
-		}
-		delete tempSzfilePath;
+		SetTimer(1, 10, NULL); //若开机自动播放成功，则自动隐藏窗口
 	}
+
+	PathRemoveFileSpec(szfilePath);//得到应用程序路径
+	//获取最近一次播放的视频的地址
+	CString tempCSPath = szfilePath;
+	tempCSPath += _T("\\config\\ARecentVideo.xml");
+	ifstream file(tempCSPath);
+	boost::archive::xml_iarchive ia(file);
+	string recentVideo;
+	ia >> BOOST_SERIALIZATION_NVP(recentVideo);  //不需要指定范围/大小
+
+	PathAppend(szfilePath, _T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
+	char* tempSzfilePath = CString_char(szfilePath);
+	//判断最近的一次播放的视频是否存在，若不存在，就寻找播放目录存在的视频，若还不存在，就不播放
+	string fileBuff;
+	if (judgeVedioFile((char*)recentVideo.c_str()))
+	{
+		fileBuff = (char*)recentVideo.c_str();
+		
+	}
+	else if (judgeVedioFile(tempSzfilePath)) {
+		fileBuff = tempSzfilePath;
+	}
+	if (fileBuff != "" || judgeVedioFile((char*)fileBuff.c_str())) {
+		char* waitDelete = EncodeToUTF8((char*)fileBuff.c_str());
+		videoPlayer->loadPlayer(waitDelete);
+		GetDlgItem(IDC_FILEPath)->SetWindowTextW(char_CString((char*)fileBuff.c_str()));
+		setLoop();
+	}
+	else
+	{
+		//若启动播放视频失败，则显示窗口
+		this->ShowWindow(SW_SHOW);
+		::SendMessage(AfxGetMainWnd()->m_hWnd, WM_SYSCOMMAND, SC_RESTORE, NULL);
+	}
+	delete tempSzfilePath;
+	
 	//检查服务,本宝宝也很无奈，技术所限，老感觉有问题
 	CDynamicWallpaperDlg::OnBnClickedCheckservice();
 
@@ -419,7 +442,6 @@ string CDynamicWallpaperDlg::pathConvert(char* ch) {
 
 CString CDynamicWallpaperDlg::char_CString(char* ch)
 {
-	// TODO: 在此处添加实现代码.
 	CString temp;
 
 	int charLen = strlen(ch);
@@ -463,13 +485,22 @@ void CDynamicWallpaperDlg::OnBnClickedSelectfile()
 		filePath = dlg.GetPathName();
 		videopath = T2A(filePath);
 		char* waitDelete = EncodeToUTF8(pathConvert(videopath).c_str());
+
 		videoPlayer->loadPlayer(waitDelete);
-		free(waitDelete);
 		GetDlgItem(IDC_FILEPath)->SetWindowTextW(filePath);
 
 		TCHAR startfilePath[MAX_PATH + 1];
 		GetModuleFileName(0, startfilePath, MAX_PATH);
 		PathRemoveFileSpec(startfilePath);//得到应用程序路径
+		//将最近设置的视频储存起来
+		CString tempCSPath = startfilePath;
+		tempCSPath += _T("\\config\\ARecentVideo.xml");
+		std::ofstream file(tempCSPath);
+		boost::archive::xml_oarchive oa(file);
+
+		string toBoost= videopath;
+		oa& BOOST_SERIALIZATION_NVP(toBoost);
+
 		PathAppend(startfilePath, _T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
 
 		ofstream outfile;
@@ -481,6 +512,7 @@ void CDynamicWallpaperDlg::OnBnClickedSelectfile()
 		if (((CButton*)GetDlgItem(IDC_loopPlayer))->GetCheck() == 1) {
 			setLoop();
 		}
+		free(waitDelete);
 	}
 }
 
@@ -574,7 +606,7 @@ LRESULT CDynamicWallpaperDlg::OnShowTask(WPARAM wParam, LPARAM lParam)
 	case WM_LBUTTONDOWN: //左键的处理
 	{
 		if (IsWindowVisible()) {
-			this->ShowWindow(SW_HIDE);//简单的显示主窗口完事儿
+			this->ShowWindow(SW_HIDE);
 		}
 		else {
 			this->ShowWindow(SW_SHOW);
@@ -1134,30 +1166,6 @@ void CDynamicWallpaperDlg::OnBnClickedMysqlservice()
 		CreateThread(NULL, 0, SetServiceStatus, sp, 0, 0);
 		break;
 	}
-	/*
-	struct ServiceParameters {
-		char* function;
-		char* serviceName;
-		char* setStatus;
-		int* returnValue;
-	};
-	ServiceParameters* mysqlsp = new ServiceParameters();
-	int* mysqlReturnValue = new int();
-	mysqlsp->function = "设";
-	mysqlsp->serviceName = "Mysql";
-	mysqlsp->returnValue = NULL;
-	switch (this->IsDlgButtonChecked(IDC_MysqlService))
-	{
-	case BST_CHECKED:
-		mysqlsp->setStatus = "1";
-		CreateThread(NULL, 0, WinExecAndWait32, mysqlsp, 0, 0);
-		break;
-	case BST_UNCHECKED:
-		mysqlsp->setStatus = "0";
-		CreateThread(NULL, 0, WinExecAndWait32, mysqlsp, 0, 0);
-		break;
-	}
-	*/
 }
 
 
@@ -1189,30 +1197,6 @@ void CDynamicWallpaperDlg::OnBnClickedGitblitservice()
 		break;
 	}
 
-	/*
-	struct ServiceParameters {
-		char* function;
-		char* serviceName;
-		char* setStatus;
-		int* returnValue;
-	};
-	ServiceParameters* gitblitsp = new ServiceParameters();
-	int* mysqlReturnValue = new int();
-	gitblitsp->function = "设";
-	gitblitsp->serviceName = "gitblit";
-	gitblitsp->returnValue = NULL;
-	switch (this->IsDlgButtonChecked(IDC_GitblitService))
-	{
-	case BST_CHECKED:
-		gitblitsp->setStatus = "1";
-		CreateThread(NULL, 0, WinExecAndWait32, gitblitsp, 0, 0);
-		break;
-	case BST_UNCHECKED:
-		gitblitsp->setStatus = "0";
-		CreateThread(NULL, 0, WinExecAndWait32, gitblitsp, 0, 0);
-		break;
-	}
-	*/
 }
 
 

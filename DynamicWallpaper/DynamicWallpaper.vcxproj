@@ -89,8 +89,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>E:\LocalGitRepository\DynamicWallpaper\lib;E:\LocalGitRepository\DynamicWallpaper\include;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\LocalGitRepository\DynamicWallpaper\include;E:\LocalGitRepository\DynamicWallpaper\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Programming\boost_1_70_0;E:\LocalGitRepository\DynamicWallpaper\lib;E:\LocalGitRepository\DynamicWallpaper\include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Programming\boost_1_70_0\stage\lib;E:\LocalGitRepository\DynamicWallpaper\include;E:\LocalGitRepository\DynamicWallpaper\lib;$(LibraryPath)</LibraryPath>
     <ReferencePath>E:\LocalGitRepository\DynamicWallpaper\include;E:\LocalGitRepository\DynamicWallpaper\lib;$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

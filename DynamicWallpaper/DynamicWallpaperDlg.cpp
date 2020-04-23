@@ -842,16 +842,6 @@ int CDynamicWallpaperDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CDialogEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
-	HANDLE   hMutex = ::CreateMutex(NULL, TRUE, L"MFCVideo");
-	if (hMutex != NULL)
-	{
-		if (GetLastError() == ERROR_ALREADY_EXISTS)
-		{
-			MessageBox(L"已经有一个程序运行.", L"提示");
-			PostMessage(WM_QUIT, 0, 0);
-			return   FALSE;
-		}
-	}
 	return 0;
 }
 

@@ -40,6 +40,27 @@ CDynamicWallpaperApp theApp;
 
 BOOL CDynamicWallpaperApp::InitInstance()
 {
+	HANDLE hMutex = ::CreateMutex(NULL, TRUE, L"MFCVideo");
+	if (hMutex != NULL)
+	{
+		if (GetLastError() == ERROR_ALREADY_EXISTS)
+		{
+			//AfxMessageBox(_T("应用程序已经运行!"));
+			//查找这个窗口,注意，这个变量窗口运行起来的标题！
+			//修改对话框标题之后也要修改这个才会激活前一个实例
+			HWND hWnd = ::FindWindow(NULL, L"动态壁纸");
+			if (IsWindow(hWnd))
+			{
+				//::MessageBox(NULL, TEXT("已经有一个实例在运行了。"), TEXT("注意"), MB_OK);
+				::ShowWindow(hWnd, SW_NORMAL);     // 显示
+				::SetForegroundWindow(hWnd);       // 激活
+				exit(0);
+				return FALSE;
+			}
+			return FALSE;
+		}
+
+	}
 	// 如果一个运行在 Windows XP 上的应用程序清单指定要
 	// 使用 ComCtl32.dll 版本 6 或更高版本来启用可视化方式，
 	//则需要 InitCommonControlsEx()。  否则，将无法创建窗口。

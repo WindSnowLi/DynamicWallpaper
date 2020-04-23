@@ -1,23 +1,16 @@
 ﻿
-// DynamicWallpaperDlg.h: 头文件
-//
+#ifndef  DYNAMICWALLPAPERDLG_H_
+#define DYNAMICWALLPAPERDLG_H_
 #define ssize_t SSIZE_T
 
 #include <WinUser.h>
 #include <iostream>
-#include <vlc/vlc.h>
 #include <thread>
-#include <fstream>
 #include <string>
-#include "VideoPlayer.h"
-#include "CRipple.h"
 #include <io.h>
 #include <vector>
-#include <ServiceDLL.h>
 using namespace std;
 #pragma comment(lib, "SERVICEDLL.lib")
-#pragma comment(lib, "libvlc.lib")
-#pragma comment(lib, "libvlccore.lib")
 #pragma once
 
 
@@ -42,7 +35,7 @@ protected:
 	HICON m_hIcon;
 	virtual BOOL OnInitDialog();
 	static bool judgeVedioFile(char* temp);
-	static string judgeFile(char* temp);
+	static string GetVideoFilePath();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
@@ -74,10 +67,6 @@ private:
 	HANDLE putStonesHandle;				
 	//自动播放下一个句柄
 	HANDLE autoNextPlayHandle;			
-
-	CRipple* g_Ripple = new CRipple();
-	VideoPlayer* videoPlayer = new VideoPlayer();
-
 public:
 	//循环播放线程
 	static DWORD WINAPI  loopPlayback(          
@@ -125,8 +114,9 @@ public:
 	static CString char_CString(char* ch);
 
 	
-
+	//设置水波纹初始点
 	void setPutStonesThread();
+	//取消水波纹初始点
 	void cancelPutStonesThread();
 	void GetAllFiles(string path, vector<string>& wallpaperFilesName);
 	//获得系统壁纸大小
@@ -135,16 +125,24 @@ public:
 	void toTray();
 	//删除托盘图标
 	void DeleteTray();
+	//设置透明度
 	void setTransparent(float transparent);
 	TCHAR* char2TCAHR(char* str);
+	//检查是否自启
 	BOOL IsAutoBoot();
+	//设置自启
 	BOOL AutoBootSet();
+	//取消自启
 	BOOL AutoBootCancel();
-
+	//设置循环
 	void setLoop();
+	//取消循环
 	void cancelLoop();
+	//恢复壁纸
 	void restoresWallpaper();
+	//设置自动播放下一个
 	void setAutoNextPlayThread();
+	//取消自动播放下一个
 	void cancelAutoNextPlayThread();
 
 	virtual void PostNcDestroy();
@@ -169,3 +167,4 @@ public:
 	afx_msg void OnBnClickedGitblitservice();
 	afx_msg void OnBnClickedCheckservice();
 };
+#endif // ! DYNAMICWALLPAPERDLG_H_

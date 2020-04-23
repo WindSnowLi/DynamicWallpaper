@@ -1,3 +1,5 @@
+#ifndef VIDEOPLAYER_H_
+#define VIDEOPLAYER_H_
 #include <windows.h>
 #include <WinUser.h>
 #define ssize_t SSIZE_T
@@ -28,4 +30,6 @@ private:
 	int Volume=30;
 	
 };
-
+//²¥·ÅÆ÷¶ÔÏó
+extern VideoPlayer* videoPlayer;
+#endif // !VIDEOPLAYER_H_

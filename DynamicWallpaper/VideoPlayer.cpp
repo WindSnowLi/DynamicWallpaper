@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "VideoPlayer.h"
 
+VideoPlayer* videoPlayer = new VideoPlayer();
 bool VideoPlayer::setVolume(int volume){
 	Volume = volume;
 	if (m != NULL && mp != NULL && ml != NULL && mlp != NULL) {

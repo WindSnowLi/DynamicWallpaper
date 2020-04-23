@@ -53,5 +53,6 @@ private:
 	BYTE* m_pBmpRender;				//水波位图渲染数据
 	BITMAPINFO			m_stBitmapInfo;			    //位图信息结构
 };
-
+//水波纹全局对象
+extern CRipple* g_Ripple;
 #endif	/*__CRIPPLE_H__*/

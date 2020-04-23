@@ -3,6 +3,8 @@
 #include "CRipple.h"
 #include <Windows.h>
 
+CRipple* g_Ripple = new CRipple();
+
 /**
  * 功能：水波定时器回调函数，定时器回调函数不能放到类成员中
  * 参数：

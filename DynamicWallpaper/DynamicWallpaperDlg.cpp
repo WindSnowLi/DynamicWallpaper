@@ -7,6 +7,10 @@
 #include "DynamicWallpaper.h"
 #include "DynamicWallpaperDlg.h"
 #include "afxdialogex.h"
+#include "VideoPlayer.h"
+#include "CRipple.h"
+#include <ServiceDLL.h>
+#include <fstream>
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 #include <boost/serialization/list.hpp>
@@ -43,7 +47,9 @@ public:
 CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
 {
 }
-
+//视频路径
+vector <string> videoDirectory;
+//动态视频壁纸层
 HWND workerw;
 //水波点击力度
 int overallClickStrength = 800;
@@ -238,14 +244,19 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	PathRemoveFileSpec(szfilePath);//得到应用程序路径
 	//获取最近一次播放的视频的地址
 	CString tempCSPath = szfilePath;
-	tempCSPath += _T("\\config\\ARecentVideo.xml");
-	ifstream file(tempCSPath);
-	boost::archive::xml_iarchive ia(file);
+	CString recentVideoPath_xml = tempCSPath + _T("\\config\\ARecentVideo.xml");
+	ifstream file_recentVideoPath_xml(recentVideoPath_xml);
+	boost::archive::xml_iarchive iRecentVideo(file_recentVideoPath_xml);
 	string recentVideo;
-	ia >> BOOST_SERIALIZATION_NVP(recentVideo);  //不需要指定范围/大小
+	iRecentVideo & BOOST_SERIALIZATION_NVP(recentVideo); //不需要指定范围/大小
 
-	PathAppend(szfilePath, _T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
-	char* tempSzfilePath = CString_char(szfilePath);
+	//获取播放过的视频的地址列表
+	CString videoDirectory_xml = tempCSPath + _T("\\config\\VideoDirectory.xml");
+	ifstream file_videoDirectory_xml(videoDirectory_xml);
+	boost::archive::xml_iarchive iVideoDirectory(file_videoDirectory_xml);
+	iVideoDirectory & BOOST_SERIALIZATION_NVP(videoDirectory);  //不需要指定范围/大小
+
+	char* tempSzfilePath = (char*)GetVideoFilePath().c_str();
 	//判断最近的一次播放的视频是否存在，若不存在，就寻找播放目录存在的视频，若还不存在，就不播放
 	string fileBuff;
 	if (judgeVedioFile((char*)recentVideo.c_str()))
@@ -268,7 +279,6 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 		this->ShowWindow(SW_SHOW);
 		::SendMessage(AfxGetMainWnd()->m_hWnd, WM_SYSCOMMAND, SC_RESTORE, NULL);
 	}
-	delete tempSzfilePath;
 	
 	//检查服务,本宝宝也很无奈，技术所限，老感觉有问题
 	CDynamicWallpaperDlg::OnBnClickedCheckservice();
@@ -325,30 +335,22 @@ bool CDynamicWallpaperDlg::judgeVedioFile(char* temp) {
 	file.close();
 	return false;
 }
-string CDynamicWallpaperDlg::judgeFile(char* temp) {
+string CDynamicWallpaperDlg::GetVideoFilePath() {
 
-	ifstream file(temp);
-	string fileBuff;
-	int i = 0;
-	if (file)
+	vector <string>::iterator iter;
+	iter= videoDirectory.begin();
+	while (iter != videoDirectory.end()) 
 	{
-		string line;
-		while (getline(file, line)) // line中不包括每行的换行符  
-		{
-			i++;
-			if (i <= lineNumber) {
-				continue;
-			}
-			if (judgeVedioFile((char*)line.c_str())) {
-				lineNumber++;
-				return line;
-				break;
-			}
+		lineNumber++;
+		ifstream file(*iter);
+		if (file) {
+			return *iter;
 		}
-		lineNumber = 0;
-
+		iter++;
 	}
-	file.close();
+	if (lineNumber >= videoDirectory.size()) {
+		lineNumber = 0;
+	}
 	return " ";
 }
 
@@ -492,23 +494,17 @@ void CDynamicWallpaperDlg::OnBnClickedSelectfile()
 		TCHAR startfilePath[MAX_PATH + 1];
 		GetModuleFileName(0, startfilePath, MAX_PATH);
 		PathRemoveFileSpec(startfilePath);//得到应用程序路径
+
 		//将最近设置的视频储存起来
 		CString tempCSPath = startfilePath;
 		tempCSPath += _T("\\config\\ARecentVideo.xml");
 		std::ofstream file(tempCSPath);
 		boost::archive::xml_oarchive oa(file);
-
 		string toBoost= videopath;
 		oa& BOOST_SERIALIZATION_NVP(toBoost);
+		//存储播放列表
+		videoDirectory.push_back(toBoost);
 
-		PathAppend(startfilePath, _T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
-
-		ofstream outfile;
-		outfile.open(startfilePath, ios::out | ios::app);
-		string write = videopath;
-		write = write + "\n";;
-		outfile << write;
-		outfile.close();
 		if (((CButton*)GetDlgItem(IDC_loopPlayer))->GetCheck() == 1) {
 			setLoop();
 		}
@@ -634,20 +630,14 @@ void CDynamicWallpaperDlg::DeleteTray()
 
 void CDynamicWallpaperDlg::OnExitRmenu()
 {
-	// TODO: 在此添加命令处理程序代码
 	DeleteTray();
+	restoresWallpaper();
 	::SendMessage(AfxGetMainWnd()->m_hWnd, WM_CLOSE, 0, NULL);
 }
 
 
 void CDynamicWallpaperDlg::OnClose()
 {
-	HDC hDC = ::GetWindowDC(workerw);
-	::SetStretchBltMode(hDC, COLORONCOLOR);
-
-	CRect rect;
-	::GetWindowRect(workerw, &rect);
-	DynamicBackground.Draw(hDC, rect);
 	restoresWallpaper();
 	CDialogEx::OnClose();
 }
@@ -827,6 +817,16 @@ void CDynamicWallpaperDlg::PostNcDestroy()
 	delete g_Ripple;
 	restoresWallpaper();
 
+	TCHAR startfilePath[MAX_PATH + 1];
+	GetModuleFileName(0, startfilePath, MAX_PATH);
+	PathRemoveFileSpec(startfilePath);//得到应用程序路径
+
+	//将最近设置的视频储存起来
+	CString tempCSPath = startfilePath;
+	tempCSPath += _T("\\config\\VideoDirectory.xml");
+	std::ofstream file(tempCSPath);
+	boost::archive::xml_oarchive oa(file);
+	oa & BOOST_SERIALIZATION_NVP(videoDirectory);
 	CDialogEx::PostNcDestroy();
 }
 
@@ -974,16 +974,12 @@ long CDynamicWallpaperDlg::wallpaperFileByte() {
 
 DWORD CDynamicWallpaperDlg::autoNextPlay(LPVOID lpParameter)
 {
-	TCHAR szfilePath[MAX_PATH + 1];
-	GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
-	PathRemoveFileSpec(szfilePath);//得到应用程序路径
-	PathAppend(szfilePath, _T("AutoStartPath.LYJ"));//添加文件名构造出绝对路径
-	char* tempSzfilePath = CString_char(szfilePath);
 	while (1) {
 		Sleep(100);
 		if (videodata->vp->get_position() >= 0.9) {
 
-			string loopPath = judgeFile(tempSzfilePath);
+			//string loopPath = judgeFile(tempSzfilePath);
+			string loopPath = GetVideoFilePath();
 			ifstream LYJFilePath(loopPath);
 			if (LYJFilePath) {
 				char* waitDelete = EncodeToUTF8((char*)loopPath.c_str());
@@ -991,12 +987,17 @@ DWORD CDynamicWallpaperDlg::autoNextPlay(LPVOID lpParameter)
 				free(waitDelete);
 				videodata->vp->set_position(0.05);
 			}
+			else 
+			{
+				AfxMessageBox(_T("历史播放路径中未发现有效视频路径，已自动取消！"));
+				break;
+			}
 		}
 		if (!autoNextPlaystatus) {
 			break;
 		}
 	}
-	delete tempSzfilePath;
+	//delete tempSzfilePath;
 	return 0;
 }
 

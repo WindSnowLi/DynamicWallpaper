@@ -1,0 +1,2 @@
+#define CRIPPLE_API __declspec(dllexport)
+#define CRIPPLE_API __declspec(dllimport)

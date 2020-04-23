@@ -10,6 +10,7 @@
 #include <io.h>
 #include <vector>
 using namespace std;
+#pragma comment(lib, "CRipple.lib")
 #pragma comment(lib, "SERVICEDLL.lib")
 #pragma once
 

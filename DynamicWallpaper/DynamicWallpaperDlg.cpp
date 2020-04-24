@@ -151,6 +151,7 @@ BEGIN_MESSAGE_MAP(CDynamicWallpaperDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_MysqlService, &CDynamicWallpaperDlg::OnBnClickedMysqlservice)
 	ON_BN_CLICKED(IDC_GitblitService, &CDynamicWallpaperDlg::OnBnClickedGitblitservice)
 	ON_BN_CLICKED(IDC_CheckService, &CDynamicWallpaperDlg::OnBnClickedCheckservice)
+	ON_BN_CLICKED(IDC_CleanPlaylist, &CDynamicWallpaperDlg::OnBnClickedCleanplaylist)
 END_MESSAGE_MAP()
 
 
@@ -248,13 +249,15 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	ifstream file_recentVideoPath_xml(recentVideoPath_xml);
 	boost::archive::xml_iarchive iRecentVideo(file_recentVideoPath_xml);
 	string recentVideo;
-	iRecentVideo & BOOST_SERIALIZATION_NVP(recentVideo); //不需要指定范围/大小
+	iRecentVideo & BOOST_SERIALIZATION_NVP(recentVideo); 
 
 	//获取播放过的视频的地址列表
 	CString videoDirectory_xml = tempCSPath + _T("\\config\\VideoDirectory.xml");
 	ifstream file_videoDirectory_xml(videoDirectory_xml);
 	boost::archive::xml_iarchive iVideoDirectory(file_videoDirectory_xml);
-	iVideoDirectory & BOOST_SERIALIZATION_NVP(videoDirectory);  //不需要指定范围/大小
+	iVideoDirectory & BOOST_SERIALIZATION_NVP(videoDirectory);  
+	//清理无效视频路径
+	CleanPlaylist();
 
 	char* tempSzfilePath = (char*)GetVideoFilePath().c_str();
 	//判断最近的一次播放的视频是否存在，若不存在，就寻找播放目录存在的视频，若还不存在，就不播放
@@ -796,11 +799,9 @@ void CDynamicWallpaperDlg::OnBnClickedautostartstatus()
 	{
 	case BST_CHECKED:
 		AutoBootSet();
-
 		break;
 	case BST_UNCHECKED:
 		AutoBootCancel();
-
 		break;
 	}
 }
@@ -810,6 +811,27 @@ void CAboutDlg::OnBnClickedOk()
 	CDialogEx::OnOK();
 }
 
+
+void CDynamicWallpaperDlg::CleanPlaylist()
+{
+	vector <string>::iterator iter;
+	iter = videoDirectory.begin();
+	string tempile;
+	while (iter!= videoDirectory.end()) {
+		tempile = *iter;
+		if (!judgeVedioFile((char*)tempile.c_str())) {
+			videoDirectory.erase(iter);
+			iter = videoDirectory.begin();
+		}
+		else 
+		{
+			iter++;
+		}
+	}
+	if (videoDirectory.size() > 50) {
+		videoDirectory.erase(videoDirectory.begin(), videoDirectory.end() - 50);
+	}
+}
 
 void CDynamicWallpaperDlg::PostNcDestroy()
 {
@@ -1362,4 +1384,11 @@ void CDynamicWallpaperDlg::OnBnClickedCheckservice()
 	scbp->mysqlReturnValue = mysqlReturnValue;
 	scbp->gitblitReturnValue = gitblitReturnValue;
 	CreateThread(NULL, 0, SetServiceCheckBoxStatus, scbp, 0, 0);
+}
+
+
+void CDynamicWallpaperDlg::OnBnClickedCleanplaylist()
+{
+	videoDirectory.clear();
+	lineNumber = 0;
 }

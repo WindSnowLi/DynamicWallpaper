@@ -13,6 +13,7 @@
 #define IDC_SelectFile                  1005
 #define IDC_SelectFile2                 1006
 #define IDC_StopVideo                   1006
+#define IDC_CleanPlaylist               1007
 #define IDC_showVolume                  1008
 #define IDC_showVolume2                 1009
 #define IDC_showSliding                 1009

@@ -67,54 +67,7 @@ private:
 	//水波线程句柄
 	HANDLE putStonesHandle;				
 	//自动播放下一个句柄
-	HANDLE autoNextPlayHandle;			
-public:
-	//循环播放线程
-	static DWORD WINAPI  loopPlayback(          
-		LPVOID lpParameter   
-	);
-	//自动下一个线程
-	static DWORD WINAPI autoNextPlay(			
-		LPVOID lpParameter   
-	);
-
-
-	//获得鼠标位置和鼠标下的窗口标题
-	static DWORD WINAPI GetCursorDowncharWindowTitle(			
-		LPVOID lpParameter   
-	);
-	//鼠标移动水波纹线程
-	static DWORD WINAPI CursorMovePutStones(			
-		LPVOID lpParameter   
-	);
-	//点击水波纹线程
-	static DWORD WINAPI ClickPutStones(				
-		LPVOID lpParameter  
-	);
-	//检查系统壁纸是否变化
-	static DWORD WINAPI CheckSystemWallpaper(				
-		LPVOID lpParameter   
-	);
-	//获取服务状态
-	static DWORD WINAPI WinExecAndWait32(
-		LPVOID lpParameter
-	);
-
-	//根据服务状态设置对应复选框
-	static DWORD WINAPI SetServiceCheckBoxStatus(
-		LPVOID lpParameter
-	);
-
-	//设置服务状态
-	static DWORD WINAPI SetServiceStatus(
-		LPVOID lpParameter
-	);
-
-	static char* CString_char(CString str);
-	static string pathConvert(char* ch);
-	static CString char_CString(char* ch);
-
-	
+	HANDLE autoNextPlayHandle;	
 	//设置水波纹初始点
 	void setPutStonesThread();
 	//取消水波纹初始点
@@ -145,7 +98,48 @@ public:
 	void setAutoNextPlayThread();
 	//取消自动播放下一个
 	void cancelAutoNextPlayThread();
-
+public:
+	//循环播放线程
+	static DWORD WINAPI  loopPlayback(          
+		LPVOID lpParameter   
+	);
+	//自动下一个线程
+	static DWORD WINAPI autoNextPlay(			
+		LPVOID lpParameter   
+	);
+	//获得鼠标位置和鼠标下的窗口标题
+	static DWORD WINAPI GetCursorDowncharWindowTitle(			
+		LPVOID lpParameter   
+	);
+	//鼠标移动水波纹线程
+	static DWORD WINAPI CursorMovePutStones(			
+		LPVOID lpParameter   
+	);
+	//点击水波纹线程
+	static DWORD WINAPI ClickPutStones(				
+		LPVOID lpParameter  
+	);
+	//检查系统壁纸是否变化
+	static DWORD WINAPI CheckSystemWallpaper(				
+		LPVOID lpParameter   
+	);
+	//获取服务状态
+	static DWORD WINAPI WinExecAndWait32(
+		LPVOID lpParameter
+	);
+	//根据服务状态设置对应复选框
+	static DWORD WINAPI SetServiceCheckBoxStatus(
+		LPVOID lpParameter
+	);
+	//设置服务状态
+	static DWORD WINAPI SetServiceStatus(
+		LPVOID lpParameter
+	);
+	static char* CString_char(CString str);
+	static string pathConvert(char* ch);
+	static CString char_CString(char* ch);
+	//清理无效播放列表
+	static void CleanPlaylist();
 	virtual void PostNcDestroy();
 	afx_msg void OnBnClickedautostartstatus();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -167,5 +161,6 @@ public:
 	afx_msg void OnBnClickedMysqlservice();
 	afx_msg void OnBnClickedGitblitservice();
 	afx_msg void OnBnClickedCheckservice();
+	afx_msg void OnBnClickedCleanplaylist();
 };
 #endif // ! DYNAMICWALLPAPERDLG_H_

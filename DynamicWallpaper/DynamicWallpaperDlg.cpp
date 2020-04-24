@@ -837,6 +837,7 @@ void CDynamicWallpaperDlg::PostNcDestroy()
 {
 	cancelPutStonesThread();
 	delete g_Ripple;
+	CDynamicWallpaperDlg::OnBnClickedStopvideo();
 	restoresWallpaper();
 
 	TCHAR startfilePath[MAX_PATH + 1];

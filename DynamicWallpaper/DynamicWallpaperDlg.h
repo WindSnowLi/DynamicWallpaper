@@ -1,5 +1,5 @@
 ﻿
-#ifndef  DYNAMICWALLPAPERDLG_H_
+#ifndef DYNAMICWALLPAPERDLG_H_
 #define DYNAMICWALLPAPERDLG_H_
 #define ssize_t SSIZE_T
 
@@ -12,9 +12,7 @@
 using namespace std;
 #pragma comment(lib, "CRipple.lib")
 #pragma comment(lib, "SERVICEDLL.lib")
-#pragma once
-
-
+#pragma comment(lib, "Version.lib ")
 // CDynamicWallpaperDlg 对话框
 class CDynamicWallpaperDlg : public CDialogEx
 {
@@ -98,6 +96,10 @@ private:
 	void setAutoNextPlayThread();
 	//取消自动播放下一个
 	void cancelAutoNextPlayThread();
+	//获取版本信息
+	CString GetVersion();
+	//写入版本信息
+	void WrittenVersionInformation();
 public:
 	//循环播放线程
 	static DWORD WINAPI  loopPlayback(          

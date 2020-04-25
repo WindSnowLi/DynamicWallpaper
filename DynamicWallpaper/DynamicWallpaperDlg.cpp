@@ -246,9 +246,9 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	//获取最近一次播放的视频的地址
 	CString tempCSPath = szfilePath;
 	CString recentVideoPath_xml = tempCSPath + _T("\\config\\ARecentVideo.xml");
+	string recentVideo;
 	ifstream file_recentVideoPath_xml(recentVideoPath_xml);
 	boost::archive::xml_iarchive iRecentVideo(file_recentVideoPath_xml);
-	string recentVideo;
 	iRecentVideo & BOOST_SERIALIZATION_NVP(recentVideo); 
 
 	//获取播放过的视频的地址列表
@@ -520,7 +520,6 @@ void CDynamicWallpaperDlg::OnBnClickedSelectfile()
 
 void CDynamicWallpaperDlg::OnTimer(UINT_PTR nIDEvent)
 {
-	float temp;
 	switch (nIDEvent) {
 	case 1:
 		this->ShowWindow(SW_HIDE); //隐藏窗口
@@ -849,7 +848,11 @@ void CDynamicWallpaperDlg::PostNcDestroy()
 	tempCSPath += _T("\\config\\VideoDirectory.xml");
 	std::ofstream file(tempCSPath);
 	boost::archive::xml_oarchive oa(file);
-	oa & BOOST_SERIALIZATION_NVP(videoDirectory);
+	oa& BOOST_SERIALIZATION_NVP(videoDirectory);
+
+	//将版本信息写入配置文件
+	WrittenVersionInformation();
+
 	CDialogEx::PostNcDestroy();
 }
 
@@ -899,6 +902,109 @@ void CDynamicWallpaperDlg::setAutoNextPlayThread() {
 }
 void CDynamicWallpaperDlg::cancelAutoNextPlayThread() {
 	autoNextPlaystatus = false;
+}
+
+CString CDynamicWallpaperDlg::GetVersion()
+{
+	CString strVersion;
+
+	TCHAR szAppFullPath[_MAX_PATH] = { 0 };
+
+	GetModuleFileName(NULL, szAppFullPath, MAX_PATH);//得到程序模块名称，全路径
+
+	//获取当前文件的版本信息
+	DWORD dwLen = GetFileVersionInfoSize(szAppFullPath, NULL);
+
+	char* pszAppVersion = new char[dwLen + 1];
+	if (pszAppVersion)
+	{
+		memset(pszAppVersion, 0, sizeof(char) * (dwLen + 1));
+		GetFileVersionInfo(szAppFullPath, NULL, dwLen, pszAppVersion);
+		UINT nLen(0);
+		VS_FIXEDFILEINFO* pFileInfo(NULL);
+		VerQueryValue(pszAppVersion, L"\\", (LPVOID*)&pFileInfo, &nLen);
+		if (pFileInfo)
+		{
+			//获取版本号
+			strVersion.Format(_T("%d.%d.%d.%d"),
+				HIWORD(pFileInfo->dwFileVersionMS),
+				LOWORD(pFileInfo->dwFileVersionMS),
+				HIWORD(pFileInfo->dwFileVersionLS),
+				LOWORD(pFileInfo->dwFileVersionLS));
+		}
+	}
+	if (strVersion == "") {
+		strVersion = _T("0.0.0.0");
+	}
+	delete []pszAppVersion;
+	return strVersion;
+}
+
+
+void CDynamicWallpaperDlg::WrittenVersionInformation()
+{
+	
+	TCHAR szfilePath[MAX_PATH + 1];
+	//文件路径
+	GetModuleFileName(0, szfilePath, MAX_PATH);
+	//得到应用程序路径
+	PathRemoveFileSpec(szfilePath);
+	CString versionInformation_xml_Path = szfilePath;
+	versionInformation_xml_Path += _T("\\config\\VersionInformation.xml");
+
+	vector<string> versioninformation;
+
+	//获取以前的版本信息
+	ifstream file_VersionInformation_xml(versionInformation_xml_Path);
+	boost::archive::xml_iarchive iVersionInformation(file_VersionInformation_xml);
+	iVersionInformation& BOOST_SERIALIZATION_NVP(versioninformation);
+	
+	//判断上次写入配置文件的时间与本次的间隔 
+	CString m_strBirth = char_CString((char*)versioninformation[1].c_str());
+	int iIndex = m_strBirth.Find('-');
+	int iReverseIndex = m_strBirth.ReverseFind('-');
+	
+	CString strYear = m_strBirth.Left(iIndex);
+	CString strDay = m_strBirth.Right(m_strBirth.GetLength() - iReverseIndex - 1);
+	CString strMonth = m_strBirth.Mid(iIndex + 1, (iReverseIndex - iIndex - 1));
+	CTime oldTime(_ttoi(strYear), _ttoi(strMonth), _ttoi(strDay));
+	CTimeSpan span = oldTime - CTime::GetCurrentTime();
+	
+	//间隔天数
+	int iDay = span.GetDays();
+	string checkTime, strVersion;
+	char* tempCheckTime, * tempStrVersion;
+
+	//获取当前时间
+	CString presentTime;
+	presentTime.Format(_T("%d-%d-%d"),
+		CTime::GetCurrentTime().GetYear(),
+		CTime::GetCurrentTime().GetMonth(),
+		CTime::GetCurrentTime().GetDay());
+	tempCheckTime = CString_char(presentTime);
+	//获取版本信息
+	tempStrVersion = CString_char(GetVersion());
+	checkTime = tempCheckTime;
+	strVersion = tempStrVersion;
+
+	if (iDay >= 3||strcmp((char*)versioninformation[1].c_str(), strVersion.c_str())) {
+		//先清空
+		versioninformation.clear();
+		//最近写入配置文件信息的时间
+		versioninformation.push_back(checkTime);
+		//最近写入配置文件信息的版本
+		versioninformation.push_back(strVersion);
+		//序列化写入配置文件
+		std::ofstream file(versionInformation_xml_Path);
+		boost::archive::xml_oarchive oa(file);
+		oa& BOOST_SERIALIZATION_NVP(versioninformation);
+	
+		//启动更新程序
+
+	}
+	delete tempCheckTime;
+	delete tempStrVersion;
+	
 }
 
 

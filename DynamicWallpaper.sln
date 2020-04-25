@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ServiceDLL", "ServiceDLL\Se
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CRipple", "CRipple\CRipple.vcxproj", "{B1FB0FFC-7B57-4DE6-88A3-D586E7E9E48E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LiveUpdate", "LiveUpdate\LiveUpdate.vcxproj", "{44592591-906C-4337-900D-1B7F23C62E69}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -58,6 +60,14 @@ Global
 		{B1FB0FFC-7B57-4DE6-88A3-D586E7E9E48E}.Release|x64.Build.0 = Release|x64
 		{B1FB0FFC-7B57-4DE6-88A3-D586E7E9E48E}.Release|x86.ActiveCfg = Release|Win32
 		{B1FB0FFC-7B57-4DE6-88A3-D586E7E9E48E}.Release|x86.Build.0 = Release|Win32
+		{44592591-906C-4337-900D-1B7F23C62E69}.Debug|x64.ActiveCfg = Debug|x64
+		{44592591-906C-4337-900D-1B7F23C62E69}.Debug|x64.Build.0 = Debug|x64
+		{44592591-906C-4337-900D-1B7F23C62E69}.Debug|x86.ActiveCfg = Debug|Win32
+		{44592591-906C-4337-900D-1B7F23C62E69}.Debug|x86.Build.0 = Debug|Win32
+		{44592591-906C-4337-900D-1B7F23C62E69}.Release|x64.ActiveCfg = Release|x64
+		{44592591-906C-4337-900D-1B7F23C62E69}.Release|x64.Build.0 = Release|x64
+		{44592591-906C-4337-900D-1B7F23C62E69}.Release|x86.ActiveCfg = Release|Win32
+		{44592591-906C-4337-900D-1B7F23C62E69}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

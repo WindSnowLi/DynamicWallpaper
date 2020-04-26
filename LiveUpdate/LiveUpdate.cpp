@@ -122,7 +122,7 @@ bool ConnectDatabase() {
     const char* unix_socket = NULL;
     unsigned long client_flag = 0;
     if (mysql_real_connect(&mysql, host, user, passwd, db, port, unix_socket, client_flag)) {
-        mysql_query(&mysql, "set names gbk");
+        mysql_query(&mysql, "set names utf-8");
         return true;
     }
     else {
@@ -217,16 +217,16 @@ bool CompareFile()
     int oldDownLoadPath = 0;
     int oldDownLoadLink = 0;
     for (int i = 0; i < oldVersionInformation[0].size(); i++) {
-        if (strcmp(oldVersionInformation[0][i].c_str(), "文件名") == 0) {
+        if (strcmp(oldVersionInformation[0][i].c_str(), "filename") == 0) {
             oldFileName = i;
         }
-        else if (strcmp(oldVersionInformation[0][i].c_str(), "版本信息") == 0) {
+        else if (strcmp(oldVersionInformation[0][i].c_str(), "version") == 0) {
             oldFileVersion = i;
         }
-        else if (strcmp(oldVersionInformation[0][i].c_str(), "下载路径") == 0) {
+        else if (strcmp(oldVersionInformation[0][i].c_str(), "download") == 0) {
             oldDownLoadPath = i;
         }
-        else if (strcmp(oldVersionInformation[0][i].c_str(), "链接") == 0) {
+        else if (strcmp(oldVersionInformation[0][i].c_str(), "link") == 0) {
             oldDownLoadLink = i;
         }
     }
@@ -236,13 +236,13 @@ bool CompareFile()
     int downLoadPath = 0;
     int downLoadLink = 0;
     for (int i = 0; i < versionInformation[0].size();i++) {
-        if (strcmp(versionInformation[0][i].c_str(),"文件名") == 0) {
+        if (strcmp(versionInformation[0][i].c_str(),"filename") == 0) {
             fileName = i;
-        }else if (strcmp(versionInformation[0][i].c_str(), "版本信息") == 0) {
+        }else if (strcmp(versionInformation[0][i].c_str(), "version") == 0) {
             fileVersion = i;
-        }else if (strcmp(versionInformation[0][i].c_str(), "下载路径") == 0) {
+        }else if (strcmp(versionInformation[0][i].c_str(), "download") == 0) {
             downLoadPath = i;
-        }else if (strcmp(versionInformation[0][i].c_str(), "链接") == 0) {
+        }else if (strcmp(versionInformation[0][i].c_str(), "link") == 0) {
             downLoadLink = i;
         }
     }
@@ -314,13 +314,13 @@ void FixConfigFile()
     int downLoadLink = 0;
     int typeFile = 0;
     for (int i = 0; i < versionInformation[0].size(); i++) {
-        if (strcmp(versionInformation[0][i].c_str(), "类型") == 0) {
+        if (strcmp(versionInformation[0][i].c_str(), "filetype") == 0) {
             typeFile = i;
         }
-        else if (strcmp(versionInformation[0][i].c_str(), "下载路径") == 0) {
+        else if (strcmp(versionInformation[0][i].c_str(), "download") == 0) {
             downLoadPath = i;
         }
-        else if (strcmp(versionInformation[0][i].c_str(), "链接") == 0) {
+        else if (strcmp(versionInformation[0][i].c_str(), "link") == 0) {
             downLoadLink = i;
         }
     }
@@ -354,10 +354,10 @@ void FixProgram()
     int downLoadLink = 0;
     int typeFile = 0;   
     for (int i = 0; i < versionInformation[0].size(); i++) {
-        if (strcmp(versionInformation[0][i].c_str(), "下载路径") == 0) {
+        if (strcmp(versionInformation[0][i].c_str(), "download") == 0) {
             downLoadPath = i;
         }
-        else if (strcmp(versionInformation[0][i].c_str(), "链接") == 0) {
+        else if (strcmp(versionInformation[0][i].c_str(), "link") == 0) {
             downLoadLink = i;
         }
     }

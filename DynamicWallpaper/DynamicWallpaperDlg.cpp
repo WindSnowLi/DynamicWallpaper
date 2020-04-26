@@ -839,10 +839,7 @@ void CDynamicWallpaperDlg::CleanPlaylist()
 
 void CDynamicWallpaperDlg::PostNcDestroy()
 {
-	cancelPutStonesThread();
-	delete g_Ripple;
-	CDynamicWallpaperDlg::OnBnClickedStopvideo();
-	restoresWallpaper();
+
 
 	TCHAR startfilePath[MAX_PATH + 1];
 	GetModuleFileName(0, startfilePath, MAX_PATH);
@@ -854,6 +851,11 @@ void CDynamicWallpaperDlg::PostNcDestroy()
 	std::ofstream file(tempCSPath);
 	boost::archive::xml_oarchive oa(file);
 	oa& BOOST_SERIALIZATION_NVP(videoDirectory);
+	Sleep(100);
+	cancelPutStonesThread();
+	delete g_Ripple;
+	CDynamicWallpaperDlg::OnBnClickedStopvideo();
+	restoresWallpaper();
 	CDialogEx::PostNcDestroy();
 }
 

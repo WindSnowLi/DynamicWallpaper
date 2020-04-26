@@ -18,12 +18,25 @@
 #pragma comment(lib,"urlmon.lib")
 using namespace std;
 
-MYSQL_FIELD* fd;    //字段列数组
-char field[32][32]; //存字段名二维数组
-MYSQL_RES* res;     //行的一个查询结果集
-MYSQL_ROW column;   //数据行的列
-char query[1000];    //查询语句
+//字段列数组
+MYSQL_FIELD* fd;    
+//存字段名二维数组
+char field[32][32]; 
+ //行的一个查询结果集
+MYSQL_RES* res;    
+//数据行的列
+MYSQL_ROW column;   
 MYSQL mysql;
+//查询语句
+char query[1000];    
+//行数
+static int numberRows = 0;
+//列数
+static int numberColumn = 0;
+//新版本信息
+vector<vector<string>>versionInformation;
+//老版本信息
+vector<vector<string>> oldVersionInformation;
 //函数声明
 bool ConnectDatabase();
 void FreeConnect();
@@ -33,50 +46,67 @@ bool CompareFile();
 char* CString_char(CString str);
 CString char_CString(char* ch);
 void FixConfigFile();
+bool Initialize();
+void FixProgram();
+void FixUpdateProgram();
 int main()
 {
-    cout << "功能选择：\n1.更新\n2.修复配置文件"<<endl;
-    int i = 0;
-    cin >> i;
-    if (i == 1) {
-        if (ConnectDatabase()) {
-            cout << "连接成功！" << endl;
-            cout << "开始查询数据······" << endl;
-            if (!QueryDatabase()) {
-                cout << "查询失败！" << endl;
-            }
-            else
+    cout << "功能选择：\n1.更新\n2.修复配置文件\n3.修复程序\n4.修复更新程序配置文件" << endl;
+    int choose = 0;
+    cin >> choose;
+    if (ConnectDatabase()) {
+        cout << "连接成功！" << endl;
+        cout << "开始查询数据······" << endl;
+        if (!QueryDatabase()) {
+            cout << "查询失败！" << endl;
+        }
+        else
+        {
+            cout << "已获得资源信息！" << endl;
+            switch (choose)
             {
-                cout << "已获得相关信息，开始对比！" << endl;
-                if (CompareFile()) {
-                    cout << "检测到可更新选项，开始下载！" << endl;
-                    char* downAddress = column[2];
-                    if (DownLoadFile(downAddress,_T("\\DynamicWallpaper.exe"))) {
-                        cout << "下载完成！" << endl;
+            case 1:
+                cout << "初始化数据······" << endl;
+                if (!Initialize) {
+                    cout << "初始化数据失败" << endl;
+                }
+                else {
+                    cout << "已获得相关信息，开始检测更新！" << endl;
+                    if (CompareFile()) {
                         cout << "更新完成！" << endl;
                     }
                     else
                     {
-                        cout << "下载失败！更新失败！" << endl;
+                        cout << "更新失败！" << endl;
                     }
                 }
+                break;
+            case 2:
+                cout << "开始修复······" << endl;
+                FixConfigFile();
+                cout << "修复完成······" << endl;
+                break;
+            case 3:
+                cout << "开始修复······" << endl;
+                FixProgram();
+                cout << "修复完成······" << endl;
+                break;
+            case 4:
+                cout << "开始修复······" << endl;
+                FixUpdateProgram();
+                cout << "修复完成······" << endl;
+                break;
+            default:
+                cout << "输入无效！" << endl;
+                break;
             }
         }
-        else
-        {
-            cout << "连接失败！" << endl;
-        }
-        FreeConnect();
     }
-    else if (i == 2) {
-        cout << "开始修复······" << endl;
-        FixConfigFile();
-        cout << "修复完成······" << endl;
-    }
-    else 
+    else
     {
-        cout << "输入无效！" << endl;
+        cout << "连接失败！" << endl;
     }
+    FreeConnect();
     system("pause");
     return 0;
 }
@@ -113,15 +143,41 @@ void FreeConnect() {
 //查询数据
 bool QueryDatabase() {
     //将数据格式化输出到字符串
-    sprintf_s(query, "select * from programUp where 文件名='DynamicWallpaper.exe'");
+    sprintf_s(query, "select * from programUp");
 
     if (mysql_query(&mysql, query)) {
         return false;
     }
     else
     {
+        
         res = mysql_store_result(&mysql);
+        // 获取列数
+        numberColumn = mysql_num_fields(res);
+        // 获取列数
+        numberRows = mysql_num_rows(res);
+        //存储字段信息
+        char* str_field[64];
+        versionInformation.push_back(vector<string>());
+        for (int i = 0; i < numberColumn; i++) {
+            str_field[i] = mysql_fetch_field(res)->name;
+            versionInformation[0].push_back(str_field[i]);
+        }
+
+        if (!res) {
+            return false;
+        }
+        int i = 1;
+        while (column = mysql_fetch_row(res)) {
+            versionInformation.push_back(vector<string>());
+            for (int j = 0; j < numberColumn; j++) {
+                versionInformation[i].push_back((char*)column[j]);
+            }
+            i++;
+        }
+        
         return true;
+        
     }
     return true;
 }
@@ -145,6 +201,7 @@ bool DownLoadFile(string fileAddress,CString savePath)
     HRESULT hr = URLDownloadToFile(NULL, buffer, file, 0, NULL);
     if (hr == S_OK)
     {
+        cout << "下载完成！" << endl;
         return true;
     }
     return false;
@@ -152,43 +209,62 @@ bool DownLoadFile(string fileAddress,CString savePath)
 
 bool CompareFile()
 {
-    TCHAR szfilePath[MAX_PATH + 1];
-    //文件路径
-    GetModuleFileName(0, szfilePath, MAX_PATH);
-    //得到应用程序路径
-    PathRemoveFileSpec(szfilePath);
-    CString versionInformation_xml_Path = szfilePath;
-    versionInformation_xml_Path += _T("\\config\\VersionInformation.xml");
-    vector<string> versioninformation;
-    //获取以前的版本信息
-    ifstream file_VersionInformation_xml(versionInformation_xml_Path);
-    boost::archive::xml_iarchive iVersionInformation(file_VersionInformation_xml);
-    iVersionInformation& BOOST_SERIALIZATION_NVP(versioninformation);
 
-    //获取当前时间
-    CString presentTime;
-    presentTime.Format(_T("%d-%d-%d"),
-        CTime::GetCurrentTime().GetYear(),
-        CTime::GetCurrentTime().GetMonth(),
-        CTime::GetCurrentTime().GetDay());
-    char* tempCheckTime = CString_char(presentTime);
-    string checkTime = tempCheckTime;
-
-    versioninformation.erase(versioninformation.begin());
-    versioninformation.insert(versioninformation.begin(), checkTime);
-
-    column = mysql_fetch_row(res);
-    char* version = column[1];
-    delete tempCheckTime;
-
-    std::ofstream file(versionInformation_xml_Path);
-    boost::archive::xml_oarchive oa(file);
-    oa& BOOST_SERIALIZATION_NVP(versioninformation);
-
-    if (strcmp(version, versioninformation[2].c_str())) {
-        return true;
+    Initialize();
+    
+    int oldFileName = 0;
+    int oldFileVersion = 0;
+    int oldDownLoadPath = 0;
+    int oldDownLoadLink = 0;
+    for (int i = 0; i < oldVersionInformation[0].size(); i++) {
+        if (strcmp(oldVersionInformation[0][i].c_str(), "文件名") == 0) {
+            oldFileName = i;
+        }
+        else if (strcmp(oldVersionInformation[0][i].c_str(), "版本信息") == 0) {
+            oldFileVersion = i;
+        }
+        else if (strcmp(oldVersionInformation[0][i].c_str(), "下载路径") == 0) {
+            oldDownLoadPath = i;
+        }
+        else if (strcmp(oldVersionInformation[0][i].c_str(), "链接") == 0) {
+            oldDownLoadLink = i;
+        }
     }
-    return false;
+
+    int fileName = 0;
+    int fileVersion = 0;
+    int downLoadPath = 0;
+    int downLoadLink = 0;
+    for (int i = 0; i < versionInformation[0].size();i++) {
+        if (strcmp(versionInformation[0][i].c_str(),"文件名") == 0) {
+            fileName = i;
+        }else if (strcmp(versionInformation[0][i].c_str(), "版本信息") == 0) {
+            fileVersion = i;
+        }else if (strcmp(versionInformation[0][i].c_str(), "下载路径") == 0) {
+            downLoadPath = i;
+        }else if (strcmp(versionInformation[0][i].c_str(), "链接") == 0) {
+            downLoadLink = i;
+        }
+    }
+    
+    for (auto j : versionInformation) {
+        for (auto k : oldVersionInformation) {
+            for (auto m : k) {
+                if (strcmp(j[fileName].c_str(), m.c_str()) == 0) {
+                    if (strcmp(j[fileVersion].c_str(), k[oldFileVersion].c_str()) == 0) {
+                        break;
+                    }
+                    else 
+                    {
+                        DownLoadFile(j[downLoadLink], char_CString((char*)j[downLoadPath].c_str()));
+                    }
+                }
+            }
+        }
+    }
+    FixUpdateProgram();
+
+    return true;
 }
 
 char* CString_char(CString str)
@@ -229,13 +305,89 @@ CString char_CString(char* ch)
         //删除缓冲区
         delete[]buf;
     }
-    return CString();
+    return temp;
 }
 
 void FixConfigFile()
 {
-    DownLoadFile("https://gitee.com/wzmmdsnn/windSnowLi/raw/master/ProgramFile/config/VersionInformation.xml", _T("\\config\\VersionInformation.xml"));
-    DownLoadFile("https://gitee.com/wzmmdsnn/windSnowLi/raw/master/ProgramFile/config/ARecentVideo.xml", _T("\\config\\ARecentVideo.xml"));
-    DownLoadFile("https://gitee.com/wzmmdsnn/windSnowLi/raw/master/ProgramFile/config/VideoDirectory.xml", _T("\\config\\VideoDirectory.xml"));
+    int downLoadPath = 0;
+    int downLoadLink = 0;
+    int typeFile = 0;
+    for (int i = 0; i < versionInformation[0].size(); i++) {
+        if (strcmp(versionInformation[0][i].c_str(), "类型") == 0) {
+            typeFile = i;
+        }
+        else if (strcmp(versionInformation[0][i].c_str(), "下载路径") == 0) {
+            downLoadPath = i;
+        }
+        else if (strcmp(versionInformation[0][i].c_str(), "链接") == 0) {
+            downLoadLink = i;
+        }
+    }
+    for (auto j : versionInformation) {
+        if (strcmp(j[typeFile].c_str(), "config") == 0) {
+            DownLoadFile(j[downLoadLink], char_CString((char*)j[downLoadPath].c_str()));
+        }
+    }
+}
+
+bool Initialize()
+{
+    TCHAR szfilePath[MAX_PATH + 1];
+    //文件路径
+    GetModuleFileName(0, szfilePath, MAX_PATH);
+    //得到应用程序路径
+    PathRemoveFileSpec(szfilePath);
+    CString versionInformation_xml_Path = szfilePath;
+    versionInformation_xml_Path += _T("\\config\\VersionInformation.xml");
+    //获取以前的版本信息
+    ifstream file_VersionInformation_xml(versionInformation_xml_Path);
+    boost::archive::xml_iarchive iVersionInformation(file_VersionInformation_xml);
+    iVersionInformation& BOOST_SERIALIZATION_NVP(oldVersionInformation);
+    oldVersionInformation.pop_back();
+    return true;
+}
+
+void FixProgram()
+{
+    int downLoadPath = 0;
+    int downLoadLink = 0;
+    int typeFile = 0;   
+    for (int i = 0; i < versionInformation[0].size(); i++) {
+        if (strcmp(versionInformation[0][i].c_str(), "下载路径") == 0) {
+            downLoadPath = i;
+        }
+        else if (strcmp(versionInformation[0][i].c_str(), "链接") == 0) {
+            downLoadLink = i;
+        }
+    }
+    for (auto j : versionInformation) {
+        DownLoadFile(j[downLoadLink], char_CString((char*)j[downLoadPath].c_str()));
+    }
+}
+
+void FixUpdateProgram()
+{
+    TCHAR szfilePath[MAX_PATH + 1];
+    //文件路径
+    GetModuleFileName(0, szfilePath, MAX_PATH);
+    //得到应用程序路径
+    PathRemoveFileSpec(szfilePath);
+    //获取当前时间
+    CString presentTime;
+    presentTime.Format(_T("%d-%d-%d"),
+        CTime::GetCurrentTime().GetYear(),
+        CTime::GetCurrentTime().GetMonth(),
+        CTime::GetCurrentTime().GetDay());
+    char* tempCheckTime = CString_char(presentTime);
+    string checkTime = tempCheckTime;
+    versionInformation.push_back(vector<string>());
+    versionInformation.back().push_back(tempCheckTime);
+    CString versionInformation_xml_Path111 = szfilePath;
+    versionInformation_xml_Path111 += _T("\\config\\VersionInformation.xml");
+
+    std::ofstream file(versionInformation_xml_Path111);
+    boost::archive::xml_oarchive oa(file);
+    oa& BOOST_SERIALIZATION_NVP(versionInformation);
 }
 

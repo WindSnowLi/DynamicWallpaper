@@ -84,9 +84,12 @@ struct videoData {
 	CImage* ci;
 };
 videoData* videodata = new videoData();
-
-char WindowTitle[100];				//鼠标下的窗口标题
-CPoint mousePosition;				//鼠标位置
+//鼠标下的窗口标题
+char WindowTitle[100];	
+//鼠标位置
+CPoint mousePosition;				
+//版本信息
+vector<vector<string>> versioninformation;
 
 //不同层深部分注解
 //https://blog.csdn.net/mkdym/article/details/7018318
@@ -321,7 +324,9 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
-	// TODO: 在此添加额外的初始化代码
+
+	//将版本信息写入配置文件
+	WrittenVersionInformation();
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -849,10 +854,6 @@ void CDynamicWallpaperDlg::PostNcDestroy()
 	std::ofstream file(tempCSPath);
 	boost::archive::xml_oarchive oa(file);
 	oa& BOOST_SERIALIZATION_NVP(videoDirectory);
-
-	//将版本信息写入配置文件
-	WrittenVersionInformation();
-
 	CDialogEx::PostNcDestroy();
 }
 
@@ -952,15 +953,13 @@ void CDynamicWallpaperDlg::WrittenVersionInformation()
 	CString versionInformation_xml_Path = szfilePath;
 	versionInformation_xml_Path += _T("\\config\\VersionInformation.xml");
 
-	vector<string> versioninformation;
-
 	//获取以前的版本信息
 	ifstream file_VersionInformation_xml(versionInformation_xml_Path);
 	boost::archive::xml_iarchive iVersionInformation(file_VersionInformation_xml);
 	iVersionInformation& BOOST_SERIALIZATION_NVP(versioninformation);
 	
 	//判断上次写入配置文件的时间与本次的间隔 
-	CString m_strBirth = char_CString((char*)versioninformation[1].c_str());
+	CString m_strBirth = char_CString((char*)versioninformation.back()[0].c_str());
 	int iIndex = m_strBirth.Find('-');
 	int iReverseIndex = m_strBirth.ReverseFind('-');
 	
@@ -986,27 +985,63 @@ void CDynamicWallpaperDlg::WrittenVersionInformation()
 	tempStrVersion = CString_char(GetVersion());
 	checkTime = tempCheckTime;
 	strVersion = tempStrVersion;
-
-	if (iDay >= 3||strcmp((char*)versioninformation[1].c_str(), strVersion.c_str())) {
-		//先清空
-		versioninformation.clear();
+	if (iDay > 3 && CheckUpdate(tempStrVersion)) {
+		versioninformation.pop_back();
 		//最近写入配置文件信息的时间
-		versioninformation.push_back(checkTime);
+		versioninformation.push_back(vector<string>());
 		//最近写入配置文件信息的版本
-		versioninformation.push_back(strVersion);
+		versioninformation.back().push_back(checkTime);
 		//序列化写入配置文件
 		std::ofstream file(versionInformation_xml_Path);
 		boost::archive::xml_oarchive oa(file);
 		oa& BOOST_SERIALIZATION_NVP(versioninformation);
-	
-		//启动更新程序
-
+		MessageBox(_T("可能需要更新了哦！"), _T("提示"));
 	}
 	delete tempCheckTime;
 	delete tempStrVersion;
 	
 }
 
+bool CDynamicWallpaperDlg::CheckUpdate(string tempversion) {
+	int fileName = 0;
+	int fileVersion = 0;
+	int downLoadPath = 0;
+	int downLoadLink = 0;
+	for (int i = 0; i < versioninformation[0].size(); i++) {
+		if (strcmp(versioninformation[0][i].c_str(), "文件名") == 0) {
+			fileName = i;
+		}
+		else if (strcmp(versioninformation[0][i].c_str(), "版本信息") == 0) {
+			fileVersion = i;
+		}
+		else if (strcmp(versioninformation[0][i].c_str(), "下载路径") == 0) {
+			downLoadPath = i;
+		}
+		else if (strcmp(versioninformation[0][i].c_str(), "链接") == 0) {
+			downLoadLink = i;
+		}
+	}
+
+	TCHAR programFileName[MAX_PATH + 1] = { 0 };
+	GetModuleFileName(NULL, programFileName, MAX_PATH);
+	CString tempProgramFileName = programFileName;
+	char* temp = CString_char(tempProgramFileName);
+	for (auto k : versioninformation) {
+		if (strcmp(k[fileName].c_str(), temp) == 0) {
+			if (strcmp(k[fileVersion].c_str(), tempversion.c_str()) == 0) {
+				delete temp;
+				return false;
+			}
+			else
+			{
+				delete temp;
+				return true;
+			}
+		}
+	}
+	delete temp;
+	return false;
+}
 
 void CDynamicWallpaperDlg::OnBnClickedWaves()
 {

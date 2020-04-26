@@ -100,6 +100,8 @@ private:
 	CString GetVersion();
 	//写入版本信息
 	void WrittenVersionInformation();
+	//检查更新
+	bool CheckUpdate(string tempversion);
 public:
 	//循环播放线程
 	static DWORD WINAPI  loopPlayback(          

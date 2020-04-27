@@ -139,6 +139,7 @@ SERVICEDLL_API int queryServiceEntrance(LPVOID lpParameter)
         string cmdContent = sp->serviceName;
         string cmd = cmdHead + setStatus + cmdContent;
         system(cmd.c_str());
+
         return 4;
     }
     return 0;

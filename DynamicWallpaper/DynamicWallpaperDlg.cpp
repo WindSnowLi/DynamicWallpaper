@@ -1420,7 +1420,6 @@ DWORD  CDynamicWallpaperDlg::WinExecAndWait32(LPVOID lpParameter)
 	}
 	delete sp;
 	delete tempSp;
-
 	/*
 	struct ServiceParameters {
 		LPCTSTR lpszAppPath;   // 执行程序的文件名
@@ -1470,19 +1469,27 @@ DWORD  CDynamicWallpaperDlg::WinExecAndWait32(LPVOID lpParameter)
 
 DWORD  CDynamicWallpaperDlg::SetServiceCheckBoxStatus(LPVOID lpParameter)
 {
+	//等待查询线程执行结束获得返回值
+	Sleep(500);
 	struct ServiceCheckBoxParameters {
 		CWnd* mysqlCheckBox;
 		CWnd* gitblitCheckBox;
 		int* mysqlReturnValue;
 		int* gitblitReturnValue;
 	};
-
+	
 	ServiceCheckBoxParameters* scbp = (ServiceCheckBoxParameters*)lpParameter;
 	if (*(scbp->mysqlReturnValue) == 2 || *(scbp->mysqlReturnValue) == 3) {
 		((CButton*)scbp->mysqlCheckBox)->SetCheck(1);
 	}
+	else {
+		((CButton*)scbp->gitblitCheckBox)->SetCheck(0);
+	}
 	if (*(scbp->gitblitReturnValue) == 2 || *(scbp->gitblitReturnValue) == 3) {
 		((CButton*)scbp->gitblitCheckBox)->SetCheck(1);
+	}
+	else {
+		((CButton*)scbp->gitblitCheckBox)->SetCheck(0);
 	}
 	delete scbp->mysqlReturnValue;
 	delete scbp->gitblitReturnValue;

@@ -91,6 +91,58 @@ CPoint mousePosition;
 //版本信息
 vector<vector<string>> versioninformation;
 
+//根据服务状态设置对应复选框
+unsigned __stdcall SetServiceCheckBoxStatus(
+	LPVOID lpParameter
+);
+
+//获取服务状态
+unsigned __stdcall WinExecAndWait32(
+	LPVOID lpParameter
+);
+
+//设置服务状态
+unsigned __stdcall SetServiceStatus(
+	LPVOID lpParameter
+);
+
+//检查系统壁纸是否变化
+unsigned __stdcall CheckSystemWallpaper(
+	LPVOID lpParameter
+);
+
+//鼠标移动水波纹线程
+unsigned __stdcall CursorMovePutStones(
+	LPVOID lpParameter
+);
+
+//点击水波纹线程
+unsigned __stdcall ClickPutStones(
+	LPVOID lpParameter
+);
+
+//获得鼠标位置和鼠标下的窗口标题
+unsigned __stdcall  GetCursorDowncharWindowTitle(
+	LPVOID lpParameter
+);
+
+//循环播放线程
+unsigned __stdcall  loopPlayback(
+	LPVOID lpParameter
+);
+
+//自动下一个线程
+unsigned __stdcall autoNextPlay(
+	LPVOID lpParameter
+);
+
+static char* CString_char(CString str);
+static string pathConvert(char* ch);
+static CString char_CString(char* ch);
+static string GetVideoFilePath();
+static char* EncodeToUTF8(const char* mbcsStr);
+
+
 //不同层深部分注解
 //https://blog.csdn.net/mkdym/article/details/7018318
 
@@ -246,14 +298,8 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	}
 
 	PathRemoveFileSpec(szfilePath);//得到应用程序路径
-	//获取最近一次播放的视频的地址
-	CString tempCSPath = szfilePath;
-	CString recentVideoPath_xml = tempCSPath + _T("\\config\\ARecentVideo.xml");
-	string recentVideo;
-	ifstream file_recentVideoPath_xml(recentVideoPath_xml);
-	boost::archive::xml_iarchive iRecentVideo(file_recentVideoPath_xml);
-	iRecentVideo & BOOST_SERIALIZATION_NVP(recentVideo); 
 
+	CString tempCSPath = szfilePath;
 	//获取播放过的视频的地址列表
 	CString videoDirectory_xml = tempCSPath + _T("\\config\\VideoDirectory.xml");
 	ifstream file_videoDirectory_xml(videoDirectory_xml);
@@ -261,6 +307,18 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	iVideoDirectory & BOOST_SERIALIZATION_NVP(videoDirectory);  
 	//清理无效视频路径
 	CleanPlaylist();
+
+	//获取最近一次播放的视频的地址
+	string recentVideo;
+	if (videoDirectory.size() == 0) {
+		recentVideo = "";
+	}
+	else 
+	{
+		recentVideo = videoDirectory.back();
+	}
+	
+
 
 	char* tempSzfilePath = (char*)GetVideoFilePath().c_str();
 	//判断最近的一次播放的视频是否存在，若不存在，就寻找播放目录存在的视频，若还不存在，就不播放
@@ -343,7 +401,7 @@ bool CDynamicWallpaperDlg::judgeVedioFile(char* temp) {
 	file.close();
 	return false;
 }
-string CDynamicWallpaperDlg::GetVideoFilePath() {
+string GetVideoFilePath() {
 
 	vector <string>::iterator iter;
 	iter= videoDirectory.begin();
@@ -414,7 +472,7 @@ HCURSOR CDynamicWallpaperDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-char* CDynamicWallpaperDlg::EncodeToUTF8(const char* mbcsStr)
+char* EncodeToUTF8(const char* mbcsStr)
 {
 	wchar_t* wideStr;
 	char* utf8Str;
@@ -435,7 +493,7 @@ char* CDynamicWallpaperDlg::EncodeToUTF8(const char* mbcsStr)
 
 }
 
-string CDynamicWallpaperDlg::pathConvert(char* ch) {
+string pathConvert(char* ch) {
 
 	string s;
 	string temp = ch;
@@ -450,7 +508,7 @@ string CDynamicWallpaperDlg::pathConvert(char* ch) {
 	return s;
 }
 
-CString CDynamicWallpaperDlg::char_CString(char* ch)
+CString char_CString(char* ch)
 {
 	CString temp;
 
@@ -700,7 +758,7 @@ BOOL CDynamicWallpaperDlg::IsAutoBoot()
 
 
 
-char* CDynamicWallpaperDlg::CString_char(CString str)
+char* CString_char(CString str)
 {
 
 	//注意：以下n和len的值大小不同，n是按字符计算的，len是按字节计算的
@@ -877,7 +935,10 @@ int CDynamicWallpaperDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CDynamicWallpaperDlg::setLoop() {
 	cycleStatus = true;
-	cycleHandle = CreateThread(NULL, 0, loopPlayback, NULL, 0, NULL);
+	//循环播放线程句柄
+	HANDLE cycleHandle;
+	cycleHandle = (HANDLE)_beginthreadex(NULL, 0, loopPlayback, NULL, 0, NULL);
+	CloseHandle(cycleHandle);
 }
 
 void CDynamicWallpaperDlg::cancelLoop() {
@@ -900,8 +961,11 @@ void CDynamicWallpaperDlg::OnBnClickedloopplayer()
 }
 
 void CDynamicWallpaperDlg::setAutoNextPlayThread() {
+	//自动播放下一个句柄
+	HANDLE autoNextPlayHandle;
 	autoNextPlaystatus = true;
-	autoNextPlayHandle = CreateThread(NULL, 0, autoNextPlay, NULL, 0, NULL);
+	autoNextPlayHandle = (HANDLE)_beginthreadex(NULL, 0, autoNextPlay, NULL, 0, NULL);
+	CloseHandle(autoNextPlayHandle);
 }
 void CDynamicWallpaperDlg::cancelAutoNextPlayThread() {
 	autoNextPlaystatus = false;
@@ -1053,6 +1117,7 @@ void CDynamicWallpaperDlg::OnBnClickedWaves()
 		CRipple** CP;
 	};
 	DWDlg* dwdlg = new DWDlg();
+	HANDLE cThread;
 	switch (this->IsDlgButtonChecked(IDC_Waves))
 	{
 	case BST_CHECKED:
@@ -1060,7 +1125,8 @@ void CDynamicWallpaperDlg::OnBnClickedWaves()
 		dwdlg->cp = g_Ripple;
 		dwdlg->CP = &g_Ripple;
 		setPutStonesThread();
-		CreateThread(NULL, 0, CheckSystemWallpaper, dwdlg, 0, 0);
+		cThread = (HANDLE)_beginthreadex(NULL, 0, CheckSystemWallpaper, dwdlg, 0, 0);
+		CloseHandle(cThread);
 		break;
 	case BST_UNCHECKED:
 		delete dwdlg;
@@ -1076,9 +1142,12 @@ void CDynamicWallpaperDlg::setPutStonesThread() {
 	clikThreadStatus = true;			//水波纹点击线程状态
 	slidingThreadStatus = true;		//滑动水波线程状态
 	videodata->cr->startTimer();
-	CreateThread(NULL, 0, GetCursorDowncharWindowTitle, NULL, 0, NULL);
-	CreateThread(NULL, 0, CursorMovePutStones, NULL, 0, 0);
-	CreateThread(NULL, 0, ClickPutStones, NULL, 0, 0);
+	HANDLE GThread = (HANDLE)_beginthreadex(NULL, 0, GetCursorDowncharWindowTitle, NULL, 0, NULL);
+	CloseHandle(GThread);
+	HANDLE CThread = (HANDLE)_beginthreadex(NULL, 0, CursorMovePutStones, NULL, 0, 0);
+	CloseHandle(CThread);
+	HANDLE CCThread = (HANDLE)_beginthreadex(NULL, 0, ClickPutStones, NULL, 0, 0);
+	CloseHandle(CCThread);
 }
 
 void CDynamicWallpaperDlg::cancelPutStonesThread() {
@@ -1138,7 +1207,7 @@ long CDynamicWallpaperDlg::wallpaperFileByte() {
 	return tempWallpaperSize;
 }
 
-DWORD CDynamicWallpaperDlg::autoNextPlay(LPVOID lpParameter)
+unsigned __stdcall autoNextPlay(LPVOID lpParameter)
 {
 	while (1) {
 		Sleep(100);
@@ -1167,12 +1236,12 @@ DWORD CDynamicWallpaperDlg::autoNextPlay(LPVOID lpParameter)
 	return 0;
 }
 
-DWORD CDynamicWallpaperDlg::GetCursorDowncharWindowTitle(LPVOID lpParameter)
+unsigned __stdcall GetCursorDowncharWindowTitle(LPVOID lpParameter)
 {
 	while (1) {
 		Sleep(getCursorTimerInterval);
 		GetCursorPos(&mousePosition); // 获取鼠标当前位置
-		::GetWindowTextA(*WindowFromPoint(mousePosition), WindowTitle, sizeof(WindowTitle)); // 获取窗口标题
+		::GetWindowTextA(WindowFromPoint(mousePosition), WindowTitle, sizeof(WindowTitle)); // 获取窗口标题
 		if (!cursorThreadStatus) {
 			break;
 		}
@@ -1180,7 +1249,7 @@ DWORD CDynamicWallpaperDlg::GetCursorDowncharWindowTitle(LPVOID lpParameter)
 	return 0;
 }
 
-DWORD CDynamicWallpaperDlg::CursorMovePutStones(LPVOID lpParameter)
+unsigned __stdcall CursorMovePutStones(LPVOID lpParameter)
 {
 	CPoint tempMousePosition;
 	while (1) {
@@ -1198,7 +1267,7 @@ DWORD CDynamicWallpaperDlg::CursorMovePutStones(LPVOID lpParameter)
 
 
 
-DWORD CDynamicWallpaperDlg::ClickPutStones(LPVOID lpParameter)
+unsigned __stdcall ClickPutStones(LPVOID lpParameter)
 {
 
 
@@ -1242,7 +1311,7 @@ DWORD CDynamicWallpaperDlg::ClickPutStones(LPVOID lpParameter)
 }
 
 
-DWORD CDynamicWallpaperDlg::CheckSystemWallpaper(LPVOID lpParameter)
+unsigned __stdcall CheckSystemWallpaper(LPVOID lpParameter)
 {
 	struct DWDlg {
 		CDynamicWallpaperDlg* dw;
@@ -1255,10 +1324,8 @@ DWORD CDynamicWallpaperDlg::CheckSystemWallpaper(LPVOID lpParameter)
 		if (wallpaperSize != dwdlg->dw->wallpaperFileByte()) {
 			dwdlg->dw->cancelPutStonesThread();
 			wallpaperSize = dwdlg->dw->wallpaperFileByte();
-
 			dwdlg->dw->DynamicBackground.Destroy();
 			dwdlg->dw->DynamicBackground.Load(char_CString((char*)dwdlg->dw->buffWallpaperFilePath.c_str()));
-
 			dwdlg->dw->buffImg = &dwdlg->dw->DynamicBackground;
 			dwdlg->dw->hBmpRipple = (HBITMAP)dwdlg->dw->buffImg->operator HBITMAP();
 			dwdlg->cp->InitRipple(dwdlg->dw->GetSafeHwnd(), dwdlg->dw->hBmpRipple, 20);
@@ -1269,7 +1336,7 @@ DWORD CDynamicWallpaperDlg::CheckSystemWallpaper(LPVOID lpParameter)
 }
 
 
-DWORD CDynamicWallpaperDlg::loopPlayback(LPVOID lpParameter)
+unsigned __stdcall loopPlayback(LPVOID lpParameter)
 {
 	float temp;
 	Sleep(2700);
@@ -1312,17 +1379,19 @@ void CDynamicWallpaperDlg::OnBnClickedMysqlservice()
 	sp->dwMilliseconds = 0;
 	sp->lpszDirectory = szfilePath;
 	sp->lpszAppPath = _T("Service.exe");
+	HANDLE mThread;
 	switch (this->IsDlgButtonChecked(IDC_MysqlService))
 	{
 	case BST_CHECKED:
 		sp->lpParameters = _T("设 Mysql 1");
-		CreateThread(NULL, 0, SetServiceStatus, sp, 0, 0);
+		mThread = (HANDLE)_beginthreadex(NULL, 0, SetServiceStatus, sp, 0, 0);
 		break;
 	case BST_UNCHECKED:
 		sp->lpParameters = _T("设 Mysql 0");
-		CreateThread(NULL, 0, SetServiceStatus, sp, 0, 0);
+		mThread = (HANDLE)_beginthreadex(NULL, 0, SetServiceStatus, sp, 0, 0);
 		break;
 	}
+	CloseHandle(mThread);
 }
 
 
@@ -1342,22 +1411,23 @@ void CDynamicWallpaperDlg::OnBnClickedGitblitservice()
 	sp->dwMilliseconds = 0;
 	sp->lpszDirectory = szfilePath;
 	sp->lpszAppPath = _T("Service.exe");
+	HANDLE gThread;
 	switch (this->IsDlgButtonChecked(IDC_MysqlService))
 	{
 	case BST_CHECKED:
 		sp->lpParameters = _T("设 gitblit 1");
-		CreateThread(NULL, 0, SetServiceStatus, sp, 0, 0);
+		gThread = (HANDLE)_beginthreadex(NULL, 0, SetServiceStatus, sp, 0, 0);
 		break;
 	case BST_UNCHECKED:
 		sp->lpParameters = _T("设 gitblit 0");
-		CreateThread(NULL, 0, SetServiceStatus, sp, 0, 0);
+		gThread = (HANDLE)_beginthreadex(NULL, 0, SetServiceStatus, sp, 0, 0);
 		break;
 	}
-
+	CloseHandle(gThread);
 }
 
 
-DWORD  CDynamicWallpaperDlg::SetServiceStatus(LPVOID lpParameter)
+unsigned __stdcall SetServiceStatus(LPVOID lpParameter)
 {
 	struct ServiceParameters {
 		LPCTSTR lpszAppPath;   // 执行程序的文件名
@@ -1401,7 +1471,7 @@ DWORD  CDynamicWallpaperDlg::SetServiceStatus(LPVOID lpParameter)
 }
 
 
-DWORD  CDynamicWallpaperDlg::WinExecAndWait32(LPVOID lpParameter)
+unsigned __stdcall WinExecAndWait32(LPVOID lpParameter)
 {
 
 	struct ServiceParameters {
@@ -1467,7 +1537,7 @@ DWORD  CDynamicWallpaperDlg::WinExecAndWait32(LPVOID lpParameter)
 }
 
 
-DWORD  CDynamicWallpaperDlg::SetServiceCheckBoxStatus(LPVOID lpParameter)
+unsigned __stdcall SetServiceCheckBoxStatus(LPVOID lpParameter)
 {
 	//等待查询线程执行结束获得返回值
 	Sleep(500);
@@ -1512,16 +1582,16 @@ void CDynamicWallpaperDlg::OnBnClickedCheckservice()
 	mysqlsp->serviceName = "Mysql";
 	mysqlsp->setStatus = NULL;
 	mysqlsp->returnValue = mysqlReturnValue;
-	CreateThread(NULL, 0, WinExecAndWait32, mysqlsp, 0, 0);
-
+	HANDLE mThread = (HANDLE)_beginthreadex(NULL, 0, WinExecAndWait32, mysqlsp, 0, 0);
+	CloseHandle(mThread);
 	ServiceParameters* gitblitsp = new ServiceParameters();
 	int* gitblitReturnValue = new int();
 	gitblitsp->function = "查";
 	gitblitsp->serviceName = "gitblit";
 	gitblitsp->setStatus = NULL;
 	gitblitsp->returnValue = gitblitReturnValue;
-	CreateThread(NULL, 0, WinExecAndWait32, gitblitsp, 0, 0);
-
+	HANDLE gThread = (HANDLE)_beginthreadex(NULL, 0, WinExecAndWait32, gitblitsp, 0, 0);
+	CloseHandle(gThread);
 	struct ServiceCheckBoxParameters {
 		CWnd* mysqlCheckBox;
 		CWnd* gitblitCheckBox;
@@ -1534,7 +1604,8 @@ void CDynamicWallpaperDlg::OnBnClickedCheckservice()
 	scbp->mysqlCheckBox = GetDlgItem(IDC_MysqlService);
 	scbp->mysqlReturnValue = mysqlReturnValue;
 	scbp->gitblitReturnValue = gitblitReturnValue;
-	CreateThread(NULL, 0, SetServiceCheckBoxStatus, scbp, 0, 0);
+	HANDLE cThread = (HANDLE)_beginthreadex(NULL, 0, SetServiceCheckBoxStatus, scbp, 0, 0);
+	CloseHandle(cThread);
 }
 
 

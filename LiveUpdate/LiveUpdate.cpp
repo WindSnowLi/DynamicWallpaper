@@ -48,12 +48,21 @@ CString char_CString(char* ch);
 void FixConfigFile();
 bool Initialize();
 void FixProgram();
-void FixUpdateProgram();
-int main()
+void UpdateProgramInformationFile();
+
+int main(int argc, char* argv[])
 {
-    cout << "功能选择：\n1.更新\n2.修复配置文件\n3.修复程序\n4.修复更新程序配置文件" << endl;
     int choose = 0;
-    cin >> choose;
+    cout << "功能选择：\n1.更新\n2.修复配置文件\n3.修复程序\n4.修复更新程序配置文件" << endl;
+    if (strcmp(argv[1], "UpdateSoftwareDirectory") == 0) {
+        //在主程序退出时调用，保证程序完全退出，所以等待1S
+        //Sleep(1000);
+        choose = 1;
+    }
+    else
+    {
+        cin >> choose;
+    }
     if (ConnectDatabase()) {
         cout << "连接成功！" << endl;
         cout << "开始查询数据······" << endl;
@@ -93,7 +102,7 @@ int main()
                 break;
             case 4:
                 cout << "开始修复······" << endl;
-                FixUpdateProgram();
+                UpdateProgramInformationFile();
                 cout << "修复完成······" << endl;
                 break;
             default:
@@ -107,7 +116,9 @@ int main()
         cout << "连接失败！" << endl;
     }
     FreeConnect();
-    system("pause");
+    if (strcmp(argv[1], "UpdateSoftwareDirectory")) {
+        system("pause");
+    }
     return 0;
 }
 
@@ -262,7 +273,7 @@ bool CompareFile()
             }
         }
     }
-    FixUpdateProgram();
+    UpdateProgramInformationFile();
 
     return true;
 }
@@ -366,7 +377,7 @@ void FixProgram()
     }
 }
 
-void FixUpdateProgram()
+void UpdateProgramInformationFile()
 {
     TCHAR szfilePath[MAX_PATH + 1];
     //文件路径

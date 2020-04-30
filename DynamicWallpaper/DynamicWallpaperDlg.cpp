@@ -89,7 +89,7 @@ char WindowTitle[100];
 //鼠标位置
 CPoint mousePosition;				
 //版本信息
-vector<vector<string>> versioninformation;
+//vector<vector<string>> versioninformation;
 
 //根据服务状态设置对应复选框
 unsigned __stdcall SetServiceCheckBoxStatus(
@@ -102,7 +102,7 @@ unsigned __stdcall WinExecAndWait32(
 );
 
 //设置服务状态
-unsigned __stdcall SetServiceStatus(
+unsigned __stdcall ExternalThread(
 	LPVOID lpParameter
 );
 
@@ -384,7 +384,7 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 
 
 	//将版本信息写入配置文件
-	WrittenVersionInformation();
+	//WrittenVersionInformation();
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -914,6 +914,7 @@ void CDynamicWallpaperDlg::PostNcDestroy()
 	delete g_Ripple;
 	CDynamicWallpaperDlg::OnBnClickedStopvideo();
 	restoresWallpaper();
+	ShellExecute(NULL, L"open", L"LiveUpdate.exe", L"UpdateSoftwareDirectory"/*your params*/, startfilePath/*WorkDirectory*/, SW_HIDE);
 	CDialogEx::PostNcDestroy();
 }
 
@@ -970,7 +971,7 @@ void CDynamicWallpaperDlg::setAutoNextPlayThread() {
 void CDynamicWallpaperDlg::cancelAutoNextPlayThread() {
 	autoNextPlaystatus = false;
 }
-
+/*
 CString CDynamicWallpaperDlg::GetVersion()
 {
 	CString strVersion;
@@ -1006,8 +1007,8 @@ CString CDynamicWallpaperDlg::GetVersion()
 	delete []pszAppVersion;
 	return strVersion;
 }
-
-
+*/
+/*
 void CDynamicWallpaperDlg::WrittenVersionInformation()
 {
 	
@@ -1067,7 +1068,8 @@ void CDynamicWallpaperDlg::WrittenVersionInformation()
 	delete tempStrVersion;
 	
 }
-
+*/
+/*
 bool CDynamicWallpaperDlg::CheckUpdate(string tempversion) {
 	int fileName = 0;
 	int fileVersion = 0;
@@ -1108,7 +1110,7 @@ bool CDynamicWallpaperDlg::CheckUpdate(string tempversion) {
 	delete temp;
 	return false;
 }
-
+*/
 void CDynamicWallpaperDlg::OnBnClickedWaves()
 {
 	struct DWDlg {
@@ -1384,11 +1386,11 @@ void CDynamicWallpaperDlg::OnBnClickedMysqlservice()
 	{
 	case BST_CHECKED:
 		sp->lpParameters = _T("设 Mysql 1");
-		mThread = (HANDLE)_beginthreadex(NULL, 0, SetServiceStatus, sp, 0, 0);
+		mThread = (HANDLE)_beginthreadex(NULL, 0, ExternalThread, sp, 0, 0);
 		break;
 	case BST_UNCHECKED:
 		sp->lpParameters = _T("设 Mysql 0");
-		mThread = (HANDLE)_beginthreadex(NULL, 0, SetServiceStatus, sp, 0, 0);
+		mThread = (HANDLE)_beginthreadex(NULL, 0, ExternalThread, sp, 0, 0);
 		break;
 	}
 	CloseHandle(mThread);
@@ -1416,18 +1418,18 @@ void CDynamicWallpaperDlg::OnBnClickedGitblitservice()
 	{
 	case BST_CHECKED:
 		sp->lpParameters = _T("设 gitblit 1");
-		gThread = (HANDLE)_beginthreadex(NULL, 0, SetServiceStatus, sp, 0, 0);
+		gThread = (HANDLE)_beginthreadex(NULL, 0, ExternalThread, sp, 0, 0);
 		break;
 	case BST_UNCHECKED:
 		sp->lpParameters = _T("设 gitblit 0");
-		gThread = (HANDLE)_beginthreadex(NULL, 0, SetServiceStatus, sp, 0, 0);
+		gThread = (HANDLE)_beginthreadex(NULL, 0, ExternalThread, sp, 0, 0);
 		break;
 	}
 	CloseHandle(gThread);
 }
 
 
-unsigned __stdcall SetServiceStatus(LPVOID lpParameter)
+unsigned __stdcall ExternalThread(LPVOID lpParameter)
 {
 	struct ServiceParameters {
 		LPCTSTR lpszAppPath;   // 执行程序的文件名

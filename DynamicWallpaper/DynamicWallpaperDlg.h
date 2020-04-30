@@ -76,11 +76,11 @@ private:
 	//取消自动播放下一个
 	void cancelAutoNextPlayThread();
 	//获取版本信息
-	CString GetVersion();
+	//CString GetVersion();
 	//写入版本信息
-	void WrittenVersionInformation();
+	//void WrittenVersionInformation();
 	//检查更新
-	bool CheckUpdate(string tempversion);
+	//bool CheckUpdate(string tempversion);
 	//清理无效播放列表
 	static void CleanPlaylist();
 	virtual void PostNcDestroy();

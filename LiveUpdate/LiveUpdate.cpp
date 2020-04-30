@@ -54,9 +54,9 @@ int main(int argc, char* argv[])
 {
     int choose = 0;
     cout << "功能选择：\n1.更新\n2.修复配置文件\n3.修复程序\n4.修复更新程序配置文件" << endl;
-    if (strcmp(argv[1], "UpdateSoftwareDirectory") == 0) {
+    if (argv[1] != NULL && strcmp(argv[1], "UpdateSoftwareDirectory") == 0) {
         //在主程序退出时调用，保证程序完全退出，所以等待1S
-        //Sleep(1000);
+        Sleep(1000);
         choose = 1;
     }
     else

@@ -435,7 +435,7 @@ void DownloadComplete()
         }
     }
     for (auto j : versionInformation) {
-        if ((strcmp(j[filename].c_str(),"壁纸.msi")==0)&& (strcmp(j[typeFile].c_str(), "installationpackage")==0)) {
+        if ((strcmp(j[filename].c_str(),"Wallpaper.msi")==0)&& (strcmp(j[typeFile].c_str(), "installationpackage")==0)) {
             DownLoadFile(j[downLoadLink], char_CString((char*)j[downLoadPath].c_str()));
             break;
         }

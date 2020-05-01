@@ -122,9 +122,7 @@ int main(int argc, char* argv[])
         std::cout << "连接失败！" << std::endl;
     }
     FreeConnect();
-    if (strcmp(argv[1], "UpdateSoftwareDirectory")) {
-        system("pause");
-    }
+    Sleep(3000);
     return 0;
 }
 

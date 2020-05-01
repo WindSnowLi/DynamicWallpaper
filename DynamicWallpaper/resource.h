@@ -28,7 +28,9 @@
 #define IDC_CHECK1                      1017
 #define IDC_loopPlayer                  1017
 #define IDC_MysqlService                1018
+#define IDC_Service1                    1018
 #define IDC_GitblitService              1019
+#define IDC_Service2                    1019
 #define IDC_Waves                       1020
 #define IDC_SlidingStrength             1022
 #define IDC_ClickStrength               1023

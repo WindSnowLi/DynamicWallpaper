@@ -49,11 +49,11 @@ void FixConfigFile();
 bool Initialize();
 void FixProgram();
 void UpdateProgramInformationFile();
-
+void DownloadComplete();
 int main(int argc, char* argv[])
 {
     int choose = 0;
-    cout << "功能选择：\n1.更新\n2.修复配置文件\n3.修复程序\n4.修复更新程序配置文件" << endl;
+    std::cout << "功能选择：\n1.壁纸程序更新\n2.修复壁纸程序配置文件\n3.修复壁纸程序\n4.修复更新程序配置文件\n5.下载完整安装包" << std::endl;
     if (argv[1] != NULL && strcmp(argv[1], "UpdateSoftwareDirectory") == 0) {
         //在主程序退出时调用，保证程序完全退出，所以等待1S
         Sleep(1000);
@@ -64,56 +64,62 @@ int main(int argc, char* argv[])
         cin >> choose;
     }
     if (ConnectDatabase()) {
-        cout << "连接成功！" << endl;
-        cout << "开始查询数据······" << endl;
+        std::cout << "连接成功！" << std::endl;
+        std::cout << "开始查询数据······" << std::endl;
         if (!QueryDatabase()) {
-            cout << "查询失败！" << endl;
+            std::cout << "查询失败！" << std::endl;
         }
         else
         {
-            cout << "已获得资源信息！" << endl;
+            std::cout << "已获得资源信息！" << std::endl;
             switch (choose)
             {
             case 1:
-                cout << "初始化数据······" << endl;
+                std::cout << "初始化数据······" << std::endl;
                 if (!Initialize) {
-                    cout << "初始化数据失败" << endl;
+                    std::cout << "初始化数据失败" << std::endl;
                 }
                 else {
-                    cout << "已获得相关信息，开始检测更新！" << endl;
+                    std::cout << "已获得相关信息，开始检测更新！" << std::endl;
                     if (CompareFile()) {
-                        cout << "更新完成！" << endl;
+                        std::cout << "更新完成！" << std::endl;
                     }
                     else
                     {
-                        cout << "更新失败！" << endl;
+                        std::cout << "更新失败！" << std::endl;
                     }
                 }
                 break;
             case 2:
-                cout << "开始修复······" << endl;
+                std::cout << "开始修复······" << std::endl;
                 FixConfigFile();
-                cout << "修复完成······" << endl;
+                std::cout << "修复完成······" << std::endl;
                 break;
             case 3:
-                cout << "开始修复······" << endl;
+                std::cout << "开始修复······" << std::endl;
                 FixProgram();
-                cout << "修复完成······" << endl;
+                std::cout << "修复完成······" << std::endl;
                 break;
             case 4:
-                cout << "开始修复······" << endl;
+                std::cout << "开始修复······" << std::endl;
                 UpdateProgramInformationFile();
-                cout << "修复完成······" << endl;
+                std::cout << "修复完成······" << std::endl;
+                break;
+            case 5:
+                std::cout << "正在通过GitHub开始下载······" << std::endl;
+                std::cout << "开始下载······" << std::endl;
+                DownloadComplete();
+                std::cout << "下载完成······" << std::endl;
                 break;
             default:
-                cout << "输入无效！" << endl;
+                std::cout << "输入无效！" << std::endl;
                 break;
             }
         }
     }
     else
     {
-        cout << "连接失败！" << endl;
+        std::cout << "连接失败！" << std::endl;
     }
     FreeConnect();
     if (strcmp(argv[1], "UpdateSoftwareDirectory")) {
@@ -212,7 +218,7 @@ bool DownLoadFile(string fileAddress,CString savePath)
     HRESULT hr = URLDownloadToFile(NULL, buffer, file, 0, NULL);
     if (hr == S_OK)
     {
-        cout << "下载完成！" << endl;
+        std::cout << "下载完成！" << endl;
         return true;
     }
     return false;
@@ -246,8 +252,11 @@ bool CompareFile()
     int fileVersion = 0;
     int downLoadPath = 0;
     int downLoadLink = 0;
+    int typeFile = 0;
     for (int i = 0; i < versionInformation[0].size();i++) {
-        if (strcmp(versionInformation[0][i].c_str(),"filename") == 0) {
+        if (strcmp(versionInformation[0][i].c_str(), "filetype") == 0) {
+            typeFile = i;
+        }else if (strcmp(versionInformation[0][i].c_str(),"filename") == 0) {
             fileName = i;
         }else if (strcmp(versionInformation[0][i].c_str(), "version") == 0) {
             fileVersion = i;
@@ -267,7 +276,9 @@ bool CompareFile()
                     }
                     else 
                     {
-                        DownLoadFile(j[downLoadLink], char_CString((char*)j[downLoadPath].c_str()));
+                        if ((strcmp(j[typeFile].c_str(), "run") == 0) && (strcmp(j[typeFile].c_str(), "config") == 0)) {
+                            DownLoadFile(j[downLoadLink], char_CString((char*)j[downLoadPath].c_str()));
+                        }
                     }
                 }
             }
@@ -373,7 +384,9 @@ void FixProgram()
         }
     }
     for (auto j : versionInformation) {
-        DownLoadFile(j[downLoadLink], char_CString((char*)j[downLoadPath].c_str()));
+        if ((strcmp(j[typeFile].c_str(),"run")==0)&& (strcmp(j[typeFile].c_str(), "config") == 0)) {
+            DownLoadFile(j[downLoadLink], char_CString((char*)j[downLoadPath].c_str())); 
+        }
     }
 }
 
@@ -400,5 +413,34 @@ void UpdateProgramInformationFile()
     std::ofstream file(versionInformation_xml_Path111);
     boost::archive::xml_oarchive oa(file);
     oa& BOOST_SERIALIZATION_NVP(versionInformation);
+}
+
+void DownloadComplete()
+{
+    int filename = 0;
+    int downLoadPath = 0;
+    int downLoadLink = 0;
+    int typeFile = 0;
+
+    for (int i = 0; i < versionInformation[0].size(); i++) {
+        if (strcmp(versionInformation[0][i].c_str(), "filetype") == 0) {
+            typeFile = i;
+        }
+        else if (strcmp(versionInformation[0][i].c_str(), "filename") == 0) {
+            filename = i;
+        }
+        else if (strcmp(versionInformation[0][i].c_str(), "download") == 0) {
+            downLoadPath = i;
+        }
+        else if (strcmp(versionInformation[0][i].c_str(), "link") == 0) {
+            downLoadLink = i;
+        }
+    }
+    for (auto j : versionInformation) {
+        if ((strcmp(j[filename].c_str(),"壁纸.msi")==0)&& (strcmp(j[typeFile].c_str(), "installationpackage")==0)) {
+            DownLoadFile(j[downLoadLink], char_CString((char*)j[downLoadPath].c_str()));
+            break;
+        }
+    }
 }
 

@@ -54,6 +54,8 @@ private:
 	void GetAllFiles(string path, vector<string>& wallpaperFilesName);
 	//最小化到托盘
 	void toTray();
+	//设置服务
+	void SetService(CString operation, CString servicename,CString status);
 	//删除托盘图标
 	void DeleteTray();
 	//设置透明度
@@ -101,8 +103,8 @@ private:
 	CSliderCtrl slidingStrength;
 	CSliderCtrl clickStrength;
 	afx_msg void OnBnClickedStopvideo();
-	afx_msg void OnBnClickedMysqlservice();
-	afx_msg void OnBnClickedGitblitservice();
+	afx_msg void OnBnClickedservice1();
+	afx_msg void OnBnClickedservice2();
 	afx_msg void OnBnClickedCheckservice();
 	afx_msg void OnBnClickedCleanplaylist();
 public:

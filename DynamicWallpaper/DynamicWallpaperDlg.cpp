@@ -90,7 +90,8 @@ char WindowTitle[100];
 CPoint mousePosition;				
 //版本信息
 //vector<vector<string>> versioninformation;
-
+//服务表
+string serviceTable[2][2];
 //根据服务状态设置对应复选框
 unsigned __stdcall SetServiceCheckBoxStatus(
 	LPVOID lpParameter
@@ -203,8 +204,8 @@ BEGIN_MESSAGE_MAP(CDynamicWallpaperDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_Waves, &CDynamicWallpaperDlg::OnBnClickedWaves)
 	ON_WM_LBUTTONDOWN()
 	ON_BN_CLICKED(IDC_StopVideo, &CDynamicWallpaperDlg::OnBnClickedStopvideo)
-	ON_BN_CLICKED(IDC_MysqlService, &CDynamicWallpaperDlg::OnBnClickedMysqlservice)
-	ON_BN_CLICKED(IDC_GitblitService, &CDynamicWallpaperDlg::OnBnClickedGitblitservice)
+	ON_BN_CLICKED(IDC_Service1, &CDynamicWallpaperDlg::OnBnClickedservice1)
+	ON_BN_CLICKED(IDC_Service2, &CDynamicWallpaperDlg::OnBnClickedservice2)
 	ON_BN_CLICKED(IDC_CheckService, &CDynamicWallpaperDlg::OnBnClickedCheckservice)
 	ON_BN_CLICKED(IDC_CleanPlaylist, &CDynamicWallpaperDlg::OnBnClickedCleanplaylist)
 END_MESSAGE_MAP()
@@ -343,9 +344,6 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 		this->ShowWindow(SW_SHOW);
 		::SendMessage(AfxGetMainWnd()->m_hWnd, WM_SYSCOMMAND, SC_RESTORE, NULL);
 	}
-	
-	//检查服务,本宝宝也很无奈，技术所限，老感觉有问题
-	CDynamicWallpaperDlg::OnBnClickedCheckservice();
 
 	//循环播放设为选中	
 	((CButton*)GetDlgItem(IDC_loopPlayer))->SetCheck(1);
@@ -359,6 +357,25 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	//转化系统壁纸格式并传给水波纹对象
 	HBITMAP hbmp = (HBITMAP)buffImg->operator HBITMAP();
 	g_Ripple->InitRipple(GetSafeHwnd(), hbmp, 20);
+
+	//获取服务信息
+	CString serviceDirectory_xml = tempCSPath + _T("\\config\\ServiceDirectory.xml");
+	ifstream file_serviceDirectory_xml(serviceDirectory_xml);
+	boost::archive::xml_iarchive iServiceDirectory(file_serviceDirectory_xml);
+	iServiceDirectory& BOOST_SERIALIZATION_NVP(serviceTable);
+	int serviceID[2] = { IDC_Service1 ,IDC_Service2 };
+	GetDlgItem(IDC_Service1)->ShowWindow(false);
+	GetDlgItem(IDC_Service2)->ShowWindow(false);
+	GetDlgItem(IDC_CheckService)->ShowWindow(false);
+	string tempServiceName;
+	for (int i = 0; i < 2;i++) {
+		tempServiceName = serviceTable[i][1];
+		if (strcmp(tempServiceName.c_str(), "")) {
+			GetDlgItem(serviceID[i])->SetWindowTextW(char_CString((char*)tempServiceName.c_str()));
+			GetDlgItem(serviceID[i])->ShowWindow(true);
+			GetDlgItem(IDC_CheckService)->ShowWindow(true);
+		}
+	}
 
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
@@ -382,7 +399,8 @@ BOOL CDynamicWallpaperDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
-
+	//检查服务
+	CDynamicWallpaperDlg::OnBnClickedCheckservice();
 	//将版本信息写入配置文件
 	//WrittenVersionInformation();
 
@@ -1363,9 +1381,7 @@ void CDynamicWallpaperDlg::OnBnClickedStopvideo()
 	restoresWallpaper();
 }
 
-
-void CDynamicWallpaperDlg::OnBnClickedMysqlservice()
-{
+void CDynamicWallpaperDlg::SetService(CString operation,CString servicename,CString status) {
 	struct ServiceParameters {
 		LPCTSTR lpszAppPath;   // 执行程序的文件名
 		LPCTSTR lpParameters;  // 参数
@@ -1382,50 +1398,40 @@ void CDynamicWallpaperDlg::OnBnClickedMysqlservice()
 	sp->lpszDirectory = szfilePath;
 	sp->lpszAppPath = _T("Service.exe");
 	HANDLE mThread;
-	switch (this->IsDlgButtonChecked(IDC_MysqlService))
-	{
-	case BST_CHECKED:
-		sp->lpParameters = _T("设 Mysql 1");
-		mThread = (HANDLE)_beginthreadex(NULL, 0, ExternalThread, sp, 0, 0);
-		break;
-	case BST_UNCHECKED:
-		sp->lpParameters = _T("设 Mysql 0");
-		mThread = (HANDLE)_beginthreadex(NULL, 0, ExternalThread, sp, 0, 0);
-		break;
-	}
+	CString tempOrder = operation + _T(" ") + servicename + _T(" ") + status;
+	sp->lpParameters = tempOrder;
+	mThread = (HANDLE)_beginthreadex(NULL, 0, ExternalThread, sp, 0, 0);
 	CloseHandle(mThread);
 }
 
-
-void CDynamicWallpaperDlg::OnBnClickedGitblitservice()
+void CDynamicWallpaperDlg::OnBnClickedservice1()
 {
-	struct ServiceParameters {
-		LPCTSTR lpszAppPath;   // 执行程序的文件名
-		LPCTSTR lpParameters;  // 参数
-		LPCTSTR lpszDirectory; // 执行环境目录
-		DWORD dwMilliseconds;    //等待时长
-	};
-	ServiceParameters* sp = new ServiceParameters();
-	TCHAR szfilePath[MAX_PATH + 1];
-	GetModuleFileName(0, szfilePath, MAX_PATH); //文件路径
-	PathRemoveFileSpec(szfilePath);//得到应用程序路径
-
-	sp->dwMilliseconds = 0;
-	sp->lpszDirectory = szfilePath;
-	sp->lpszAppPath = _T("Service.exe");
-	HANDLE gThread;
-	switch (this->IsDlgButtonChecked(IDC_MysqlService))
+	string temp = serviceTable[0][1];
+	switch (this->IsDlgButtonChecked(IDC_Service1))
 	{
 	case BST_CHECKED:
-		sp->lpParameters = _T("设 gitblit 1");
-		gThread = (HANDLE)_beginthreadex(NULL, 0, ExternalThread, sp, 0, 0);
+		CDynamicWallpaperDlg::SetService(_T("设"),char_CString((char*)temp.c_str()),_T("1"));
 		break;
 	case BST_UNCHECKED:
-		sp->lpParameters = _T("设 gitblit 0");
-		gThread = (HANDLE)_beginthreadex(NULL, 0, ExternalThread, sp, 0, 0);
+		CDynamicWallpaperDlg::SetService(_T("设"), char_CString((char*)temp.c_str()), _T("0"));
 		break;
 	}
-	CloseHandle(gThread);
+	
+}
+
+
+void CDynamicWallpaperDlg::OnBnClickedservice2()
+{
+	string temp = serviceTable[1][1];
+	switch (this->IsDlgButtonChecked(IDC_Service2))
+	{
+	case BST_CHECKED:
+		CDynamicWallpaperDlg::SetService(_T("设"), char_CString((char*)temp.c_str()), _T("1"));
+		break;
+	case BST_UNCHECKED:
+		CDynamicWallpaperDlg::SetService(_T("设"), char_CString((char*)temp.c_str()), _T("0"));
+		break;
+	}
 }
 
 
@@ -1544,27 +1550,27 @@ unsigned __stdcall SetServiceCheckBoxStatus(LPVOID lpParameter)
 	//等待查询线程执行结束获得返回值
 	Sleep(500);
 	struct ServiceCheckBoxParameters {
-		CWnd* mysqlCheckBox;
-		CWnd* gitblitCheckBox;
-		int* mysqlReturnValue;
-		int* gitblitReturnValue;
+		CWnd* service1CheckBox;
+		CWnd* service2CheckBox;
+		int* service1ReturnValue;
+		int* service2ReturnValue;
 	};
 	
 	ServiceCheckBoxParameters* scbp = (ServiceCheckBoxParameters*)lpParameter;
-	if (*(scbp->mysqlReturnValue) == 2 || *(scbp->mysqlReturnValue) == 3) {
-		((CButton*)scbp->mysqlCheckBox)->SetCheck(1);
+	if (*(scbp->service1ReturnValue) == 2 || *(scbp->service1ReturnValue) == 3) {
+		((CButton*)scbp->service1CheckBox)->SetCheck(1);
 	}
 	else {
-		((CButton*)scbp->gitblitCheckBox)->SetCheck(0);
+		((CButton*)scbp->service1CheckBox)->SetCheck(0);
 	}
-	if (*(scbp->gitblitReturnValue) == 2 || *(scbp->gitblitReturnValue) == 3) {
-		((CButton*)scbp->gitblitCheckBox)->SetCheck(1);
+	if (*(scbp->service2ReturnValue) == 2 || *(scbp->service2ReturnValue) == 3) {
+		((CButton*)scbp->service2CheckBox)->SetCheck(1);
 	}
 	else {
-		((CButton*)scbp->gitblitCheckBox)->SetCheck(0);
+		((CButton*)scbp->service2CheckBox)->SetCheck(0);
 	}
-	delete scbp->mysqlReturnValue;
-	delete scbp->gitblitReturnValue;
+	delete scbp->service1ReturnValue;
+	delete scbp->service2ReturnValue;
 	delete scbp;
 	return 0;
 }
@@ -1578,34 +1584,38 @@ void CDynamicWallpaperDlg::OnBnClickedCheckservice()
 		char* setStatus;
 		int* returnValue;
 	};
-	ServiceParameters* mysqlsp = new ServiceParameters();
-	int* mysqlReturnValue = new int();
-	mysqlsp->function = "查";
-	mysqlsp->serviceName = "Mysql";
-	mysqlsp->setStatus = NULL;
-	mysqlsp->returnValue = mysqlReturnValue;
-	HANDLE mThread = (HANDLE)_beginthreadex(NULL, 0, WinExecAndWait32, mysqlsp, 0, 0);
+
+	ServiceParameters* service1sp = new ServiceParameters();
+	int* service1ReturnValue = new int();
+	service1sp->function = "查";
+	service1sp->serviceName = (char*)serviceTable[0][1].c_str();
+	service1sp->setStatus = NULL;
+	service1sp->returnValue = service1ReturnValue;
+	HANDLE mThread = (HANDLE)_beginthreadex(NULL, 0, WinExecAndWait32, service1sp, 0, 0);
 	CloseHandle(mThread);
-	ServiceParameters* gitblitsp = new ServiceParameters();
-	int* gitblitReturnValue = new int();
-	gitblitsp->function = "查";
-	gitblitsp->serviceName = "gitblit";
-	gitblitsp->setStatus = NULL;
-	gitblitsp->returnValue = gitblitReturnValue;
-	HANDLE gThread = (HANDLE)_beginthreadex(NULL, 0, WinExecAndWait32, gitblitsp, 0, 0);
+
+	ServiceParameters* service2sp = new ServiceParameters();
+	int* service2ReturnValue = new int();
+	service2sp->function = "查";
+	service2sp->serviceName = (char*)serviceTable[1][1].c_str();;
+	service2sp->setStatus = NULL;
+	service2sp->returnValue = service2ReturnValue;
+	HANDLE gThread = (HANDLE)_beginthreadex(NULL, 0, WinExecAndWait32, service2sp, 0, 0);
 	CloseHandle(gThread);
+
+
 	struct ServiceCheckBoxParameters {
-		CWnd* mysqlCheckBox;
-		CWnd* gitblitCheckBox;
-		int* mysqlReturnValue;
-		int* gitblitReturnValue;
+		CWnd* service1CheckBox;
+		CWnd* service2CheckBox;
+		int* service1ReturnValue;
+		int* service2ReturnValue;
 	};
 
 	ServiceCheckBoxParameters* scbp = new ServiceCheckBoxParameters();
-	scbp->gitblitCheckBox = GetDlgItem(IDC_GitblitService);
-	scbp->mysqlCheckBox = GetDlgItem(IDC_MysqlService);
-	scbp->mysqlReturnValue = mysqlReturnValue;
-	scbp->gitblitReturnValue = gitblitReturnValue;
+	scbp->service1CheckBox = GetDlgItem(IDC_Service1);
+	scbp->service2CheckBox = GetDlgItem(IDC_Service2);
+	scbp->service1ReturnValue = service1ReturnValue;
+	scbp->service2ReturnValue = service2ReturnValue;
 	HANDLE cThread = (HANDLE)_beginthreadex(NULL, 0, SetServiceCheckBoxStatus, scbp, 0, 0);
 	CloseHandle(cThread);
 }

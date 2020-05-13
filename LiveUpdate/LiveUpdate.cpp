@@ -334,19 +334,20 @@ void FixConfigFile()
     int downLoadLink = 0;
     int typeFile = 0;
     for (int i = 0; i < versionInformation[0].size(); i++) {
-        if (strcmp(versionInformation[0][i].c_str(), "filetype") == 0) {
-            typeFile = i;
-        }
-        else if (strcmp(versionInformation[0][i].c_str(), "download") == 0) {
+        if (strcmp(versionInformation[0][i].c_str(), "download") == 0) {
             downLoadPath = i;
         }
         else if (strcmp(versionInformation[0][i].c_str(), "link") == 0) {
             downLoadLink = i;
         }
+        else if (strcmp(versionInformation[0][i].c_str(), "filetype") == 0) {
+            typeFile = i;
+        }
     }
     for (auto j : versionInformation) {
-        if (strcmp(j[typeFile].c_str(), "config") == 0) {
-            DownLoadFile(j[downLoadLink], char_CString((char*)j[downLoadPath].c_str()));
+        if ((strcmp(j[typeFile].c_str(),"run")==0) || (strcmp(j[typeFile].c_str(), "config") == 0)) {
+            cout <<"Get: "<< "\t" << j[downLoadLink] << endl;
+            DownLoadFile(j[downLoadLink], char_CString((char*)j[downLoadPath].c_str())); 
         }
     }
 }

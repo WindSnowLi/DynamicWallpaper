@@ -5,3 +5,11 @@
 数据库连接在   LiveUpdate项目
 
 原有数据库账号已销毁，需自行创建
+
+
+项目文件中附带的有vlc库，但不附带boost库,所以需要自行去官方网站下载boost库
+
+目前用到了一些配置文件，所以需要在”x64下的release版本的完整包.zip“文件中解压出所需要的config与plugins复制到程序执行目录，
+其他动态库可以由已有项目直接生成或者也解压过去。
+
+其中confiig/ServiceDirectory.xml，里边的mysql与tomcat服务名可以自定义，不过要直接在这个文件中用记事本修改
